@@ -10,25 +10,15 @@ void error_callback(int error, const char *description)
 	std::cerr << description << std::endl;
 }
 
-WindowManager * WindowManager::instance = nullptr;
-
-WindowManager::WindowManager()
+WindowManager* WindowManager::getInstance()
 {
-	if (instance)
-	{
-		std::cerr << "One instance of WindowManager has already been created, event callbacks of new instance will not work." << std::endl;
-	}
-
-	instance = this;
+	static WindowManager instance;
+	return &instance;
 }
 
-WindowManager::~WindowManager()
-{
-	if (instance == this)
-	{
-		instance = nullptr;
-	}
-}
+WindowManager::WindowManager() {}
+
+WindowManager::~WindowManager() {}
 
 bool WindowManager::init(int const width, int const height)
 {
@@ -94,6 +84,7 @@ GLFWwindow * WindowManager::getHandle()
 
 void WindowManager::key_callback(GLFWwindow * window, int key, int scancode, int action, int mods)
 {
+	WindowManager* instance = WindowManager::getInstance();
 	if (instance && instance->callbacks)
 	{
 		instance->callbacks->keyCallback(window, key, scancode, action, mods);
@@ -102,6 +93,7 @@ void WindowManager::key_callback(GLFWwindow * window, int key, int scancode, int
 
 void WindowManager::mouse_callback(GLFWwindow * window, int button, int action, int mods)
 {
+	WindowManager* instance = WindowManager::getInstance();
 	if (instance && instance->callbacks)
 	{
 		instance->callbacks->mouseCallback(window, button, action, mods);
@@ -110,6 +102,7 @@ void WindowManager::mouse_callback(GLFWwindow * window, int button, int action, 
 
 void WindowManager::resize_callback(GLFWwindow * window, int in_width, int in_height)
 {
+	WindowManager* instance = WindowManager::getInstance();
 	if (instance && instance->callbacks)
 	{
 		instance->callbacks->resizeCallback(window, in_width, in_height);

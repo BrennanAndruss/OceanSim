@@ -7,10 +7,7 @@
 #include <glad/glad.h>
 
 #include "GLSL.h"
-//#include "Program.h"
-//#include "Shape.h"
-//#include "ShapeNode.h"
-//#include "MatrixStack.h"
+#include "Mesh.h"
 #include "WindowManager.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -25,9 +22,7 @@ class Application : public EventCallbacks
 {
 public:
 
-	WindowManager * windowManager = nullptr;
-
-
+	WindowManager* windowManager = nullptr;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -39,10 +34,12 @@ public:
 		{
 
 		}
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
+		{
 			
 		}
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) 
+		{
 			
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -125,27 +122,25 @@ int main(int argc, char *argv[])
 		resourceDir = argv[1];
 	}
 
-	Application *application = new Application();
+	Application application;
 
 	// Your main will always include a similar set up to establish your window
 	// and GL context, etc.
-
-	WindowManager *windowManager = new WindowManager();
+	WindowManager* windowManager = WindowManager::getInstance();
 	windowManager->init(640, 480);
-	windowManager->setEventCallbacks(application);
-	application->windowManager = windowManager;
+	windowManager->setEventCallbacks(&application);
+	application.windowManager = windowManager;
 
 	// This is the code that will likely change program to program as you
 	// may need to initialize or set up different data and state
-
-	application->init(resourceDir);
-	application->initGeom(resourceDir);
+	application.init(resourceDir);
+	application.initGeom(resourceDir);
 
 	// Loop until the user closes the window
 	while (! glfwWindowShouldClose(windowManager->getHandle()))
 	{
 		// Render scene
-		application->render();
+		application.render();
 
 		// Swap front and back buffers
 		glfwSwapBuffers(windowManager->getHandle());

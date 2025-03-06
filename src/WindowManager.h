@@ -27,29 +27,20 @@
 // events, such as key presses and mouse movement.
 class EventCallbacks
 {
-
 public:
 
-
 	virtual void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) = 0;
-
 	virtual void mouseCallback(GLFWwindow *window, int button, int action, int mods) = 0;
-
 	virtual void resizeCallback(GLFWwindow *window, int in_width, int in_height) = 0;
-
 };
 
 // This class is responsible for all window management code, i.e. GLFW3 code
 // You shouldn't have to touch this code for any of the early lab assignments
 class WindowManager
 {
-
 public:
-
-	WindowManager();
-	~WindowManager();
-
-	// Go ahead and ignore these two lines :-) for now
+	// This class implements the singleton design pattern
+	static WindowManager* getInstance();
 	WindowManager(const WindowManager&) = delete;
 	WindowManager& operator= (const WindowManager&) = delete;
 
@@ -57,18 +48,16 @@ public:
 	void shutdown();
 
 	void setEventCallbacks(EventCallbacks *callbacks);
-
 	GLFWwindow *getHandle();
 
 protected:
-
-	// This class implements the singleton design pattern
-	static WindowManager * instance;
-
 	GLFWwindow *windowHandle = nullptr;
 	EventCallbacks *callbacks = nullptr;
 
 private:
+	// This class implements the singleton design pattern
+	WindowManager();
+	~WindowManager();
 
 	// What are these?!
 	//
@@ -79,7 +68,6 @@ private:
 	static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 	static void mouse_callback(GLFWwindow *window, int button, int action, int mods);
 	static void resize_callback(GLFWwindow *window, int in_width, int in_height);
-
 };
 
 #endif
