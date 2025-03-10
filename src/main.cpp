@@ -7,6 +7,8 @@
 #include <glad/glad.h>
 
 #include "GLSL.h"
+#include "Shader.h"
+#include "Texture.h"
 #include "Mesh.h"
 #include "WindowManager.h"
 
@@ -74,20 +76,18 @@ public:
 	{
 		GLSL::checkVersion();
 
-		// Set background color.
-		glClearColor(.12f, .34f, .56f, 1.0f);
 		// Enable z-buffer test.
 		glEnable(GL_DEPTH_TEST);
 
 		
 	}
 
-	void initGeom(const std::string& resourceDirectory)
+	void initObjs(const std::string& resourceDirectory)
 	{
 
 	}
 
-	void render() 
+	void run()
 	{
 		// Get current frame buffer size
 		int width, height;
@@ -134,13 +134,13 @@ int main(int argc, char *argv[])
 	// This is the code that will likely change program to program as you
 	// may need to initialize or set up different data and state
 	application.init(resourceDir);
-	application.initGeom(resourceDir);
+	application.initObjs(resourceDir);
 
 	// Loop until the user closes the window
-	while (! glfwWindowShouldClose(windowManager->getHandle()))
+	while (!glfwWindowShouldClose(windowManager->getHandle()))
 	{
 		// Render scene
-		application.render();
+		application.run();
 
 		// Swap front and back buffers
 		glfwSwapBuffers(windowManager->getHandle());
