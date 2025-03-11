@@ -4,10 +4,10 @@
 #include <fstream>
 #include "GLSL.h"
 
-std::string readFileAsString(const std::string& fileName)
+std::string readFileAsString(const std::string& filepath)
 {
 	std::string result;
-	std::ifstream fileHandle(fileName);
+	std::ifstream fileHandle(filepath);
 
 	if (fileHandle.is_open())
 	{
@@ -15,30 +15,29 @@ std::string readFileAsString(const std::string& fileName)
 		result.reserve((size_t)fileHandle.tellg());
 		fileHandle.seekg(0, std::ios::beg);
 
-		result.assign((std::istreambuf_iterator<char>(fileHandle)), std::istreambuf_iterator<char>());
+		result.assign((std::istreambuf_iterator<char>(fileHandle)), 
+			std::istreambuf_iterator<char>());
 	}
 	else
 	{
-		std::cerr << "Could not open file: '" << fileName << "'" << std::endl;
+		std::cerr << "Could not open file: '" << filepath 
+			<< "'" << std::endl;
 	}
 
 	return result;
 }
 
-bool Shader::init(const std::string& vShaderFile, const std::string& fShaderFile)
+bool Shader::init(const std::string& vShaderFilepath, 
+	const std::string& fShaderFilepath)
 {
-	// Set the shader names
-	vShaderName = vShaderFile;
-	fShaderName = fShaderFile;
+	vShaderName = vShaderFilepath;
+	fShaderName = fShaderFilepath;
 
 	// Retrieve shader source code from the file
-	std::string vertexCode = readFileAsString(vShaderFile);
-	std::string fragmentCode = readFileAsString(fShaderFile);
+	std::string vertexCode = readFileAsString(vShaderFilepath);
+	std::string fragmentCode = readFileAsString(fShaderFilepath);
 	const char* vShaderCode = vertexCode.c_str();
 	const char* fShaderCode = fragmentCode.c_str();
-
-
-	GLint rc;
 
 	GLuint vShader = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -47,6 +46,7 @@ bool Shader::init(const std::string& vShaderFile, const std::string& fShaderFile
 	CHECKED_GL_CALL(glShaderSource(fShader, 1, &fShaderCode, NULL));
 
 	// Compile vertex shader
+	GLint rc;
 	CHECKED_GL_CALL(glCompileShader(vShader));
 	CHECKED_GL_CALL(glGetShaderiv(vShader, GL_COMPILE_STATUS, &rc));
 	if (!rc)
@@ -54,7 +54,8 @@ bool Shader::init(const std::string& vShaderFile, const std::string& fShaderFile
 		if (verbose)
 		{
 			GLSL::printShaderInfoLog(vShader);
-			std::cout << "Error compiling vertex shader " << vShaderName << std::endl;
+			std::cout << "Error compiling vertex shader " 
+				<< vShaderName << std::endl;
 		}
 		return false;
 	}
@@ -67,7 +68,8 @@ bool Shader::init(const std::string& vShaderFile, const std::string& fShaderFile
 		if (verbose)
 		{
 			GLSL::printShaderInfoLog(fShader);
-			std::cout << "Error compiling fragment shader " << fShaderName << std::endl;
+			std::cout << "Error compiling fragment shader " 
+				<< fShaderName << std::endl;
 		}
 		return false;
 	}
@@ -83,7 +85,8 @@ bool Shader::init(const std::string& vShaderFile, const std::string& fShaderFile
 		if (verbose)
 		{
 			GLSL::printProgramInfoLog(pid);
-			std::cout << "Error linking shaders " << vShaderName << " and " << fShaderName << std::endl;
+			std::cout << "Error linking shaders " << vShaderName 
+				<< " and " << fShaderName << std::endl;
 		}
 		return false;
 	}
@@ -99,4 +102,55 @@ void Shader::bind()
 void Shader::unbind()
 {
 	CHECKED_GL_CALL(glUseProgram(0));
+}
+
+void Shader::setBool(const std::string& name, int value) const
+{
+	CHECKED_GL_CALL(glUniform1i(glGetUniformLocation(pid, name.c_str()), value));
+}
+
+void Shader::setInt(const std::string& name, int value) const
+{
+	CHECKED_GL_CALL(glUniform1i(glGetUniformLocation(pid, name.c_str()), value));
+}
+
+void Shader::setFloat(const std::string& name, float value) const
+{
+	CHECKED_GL_CALL(glUniform1f(glGetUniformLocation(pid, name.c_str()), value));
+}
+
+void Shader::setVec2(const std::string& name, const glm::vec2& value) const
+{
+	CHECKED_GL_CALL(glUniform2fv(glGetUniformLocation(pid, name.c_str()), 
+		1, &value[0]));
+}
+
+void Shader::setVec3(const std::string& name, const glm::vec3& value) const
+{
+	CHECKED_GL_CALL(glUniform3fv(glGetUniformLocation(pid, name.c_str()), 
+		1, &value[0]));
+}
+
+void Shader::setVec4(const std::string& name, const glm::vec4& value) const
+{
+	CHECKED_GL_CALL(glUniform4fv(glGetUniformLocation(pid, name.c_str()), 
+		1, &value[0]));
+}
+
+void Shader::setMat2(const std::string& name, const glm::mat2& value) const
+{
+	CHECKED_GL_CALL(glUniformMatrix2fv(glGetUniformLocation(pid, name.c_str()), 
+		1, GL_FALSE, &value[0][0]));
+}
+
+void Shader::setMat3(const std::string& name, const glm::mat3& value) const
+{
+	CHECKED_GL_CALL(glUniformMatrix3fv(glGetUniformLocation(pid, name.c_str()), 
+		1, GL_FALSE, &value[0][0]));
+}
+
+void Shader::setMat4(const std::string& name, const glm::mat4& value) const
+{
+	CHECKED_GL_CALL(glUniformMatrix4fv(glGetUniformLocation(pid, name.c_str()), 
+		1, GL_FALSE, &value[0][0]));
 }
