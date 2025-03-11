@@ -6,6 +6,8 @@
 #include <iostream>
 #include <glad/glad.h>
 
+#define DISABLE_OPENGL_ERROR_CHECKS
+
 #include "GLSL.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -25,6 +27,16 @@ class Application : public EventCallbacks
 public:
 
 	WindowManager* windowManager = nullptr;
+
+	std::string resourceDir;
+
+	// Models
+	Mesh cube;
+
+	// Shaders
+	Shader simple;
+
+	// Textures
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -72,19 +84,61 @@ public:
 		glViewport(0, 0, width, height);
 	}
 
-	void init(const std::string& resourceDirectory)
+	void init()
 	{
 		GLSL::checkVersion();
 
-		// Enable z-buffer test.
+		// Set background color
+		glClearColor(.72f, .84f, 1.06f, 1.0f);
+		
+		// Enable z-buffer test
 		glEnable(GL_DEPTH_TEST);
 
-		
+		// Initialize shaders
+		simple.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
+
+		// Initialize models
+		loadObj(cube);
 	}
 
-	void initObjs(const std::string& resourceDirectory)
+	void loadObj(Mesh& mesh)
 	{
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> objMaterials;
+		std::string errStr;
+		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr,
+			(resourceDir + "/cube.obj").c_str());
 
+		if (!rc)
+		{
+			std::cerr << errStr << std::endl;
+		}
+		else
+		{
+			mesh.setupBuffers(shapes[0]);
+		}
+	}
+
+	void loadMultishapeObj(std::vector<Mesh>& model)
+	{
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> objMaterials;
+		std::string errStr;
+		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr,
+			(resourceDir + "/cube.obj").c_str());
+
+		if (!rc)
+		{
+			std::cerr << errStr << std::endl;
+		}
+		else
+		{
+			model.resize(shapes.size());
+			for (size_t i = 0; i < shapes.size(); i++)
+			{
+				model[i].setupBuffers(shapes[i]);
+			}
+		}
 	}
 
 	void run()
@@ -100,29 +154,57 @@ public:
 		// Projection matrix
 		float aspect = width/(float)height;
 		glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 100.0f);
-		// shader.setMat4("projection", projection);
 
 		// View matrix
 		glm::mat4 view(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -6.0f));
-		// shader.setMat4("view", view);
+		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -6.0f));
 
 		// Initialize the model matrix
 		glm::mat4 model(1.0f);
+		
+		// Configure simple shader
+		simple.bind();
+		simple.setMat4("P", projection);
+		simple.setMat4("V", view);
+		simple.setMat4("M", model);
+
+		// Draw the cube
+		cube.draw();
+
+		//float triangleVerts[] = {
+		//	0.0f,  1.0f, 0.0f,
+		//   -1.0f, -1.0f, 0.0f,
+		//	1.0f, -1.0f, 0.0f
+		//};
+		//unsigned int triangleVBO, triangleVAO;
+		//glGenVertexArrays(1, &triangleVAO);
+		//glGenBuffers(1, &triangleVBO);
+		//glBindVertexArray(triangleVAO);
+		//glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerts), triangleVerts, GL_STATIC_DRAW);
+		//glEnableVertexAttribArray(0);
+		//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		//glBindVertexArray(0);
+
+		//glBindVertexArray(triangleVAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glBindVertexArray(0);
+
+		simple.unbind();
 	}
 };
 
 int main(int argc, char *argv[])
 {
+	Application application;
+
 	// Where the resources are loaded from
-	std::string resourceDir = "../../../resources";
+	application.resourceDir = "../../../resources";
 
 	if (argc >= 2)
 	{
-		resourceDir = argv[1];
+		application.resourceDir = argv[1];
 	}
-
-	Application application;
 
 	// Your main will always include a similar set up to establish your window
 	// and GL context, etc.
@@ -133,8 +215,7 @@ int main(int argc, char *argv[])
 
 	// This is the code that will likely change program to program as you
 	// may need to initialize or set up different data and state
-	application.init(resourceDir);
-	application.initObjs(resourceDir);
+	application.init();
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(windowManager->getHandle()))

@@ -1,4 +1,5 @@
 #pragma once
+
 #ifndef _SHAPE_H_
 #define _SHAPE_H_
 
@@ -7,32 +8,28 @@
 #include <glm/glm.hpp>
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
-// Vertex structure for defining the size and layout of data 
-// in the vertex buffer object
-struct Vertex
-{
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 texCoord;
-};
+#define VERTEX_ATTRIBUTES 8
 
 class Mesh
 {
 public:
-	Mesh(bool hasTexCoords, bool isDynamic);
+	Mesh();
 	~Mesh();
 
-	void draw() const;
+	void setDynamic(bool isDynamic);
 	void setupBuffers(std::vector<glm::vec3>& positions, 
 		std::vector<glm::vec3>& normals, std::vector<glm::vec2>& texCoords, 
 		std::vector<unsigned int>& indices);
-	void updateBuffers(std::vector<glm::vec3>& positions, std::vector<glm::vec3>& normals);
+	void setupBuffers(const tinyobj::shape_t& shape);
+	void updateBuffers(std::vector<glm::vec3>& positions, 
+		std::vector<glm::vec3>& normals);
+	void draw() const;
 
 private:
-	std::vector<Vertex> vertBuf;
-	GLuint vaoID, vboID, eboID;
+	std::vector<float> vertBuf;
+	size_t numIndices;
 
-	bool hasTexCoords;
+	GLuint vaoID, vboID, eboID;
 	GLenum vertUsage; // GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
 };
 
