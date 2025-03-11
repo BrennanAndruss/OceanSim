@@ -12,6 +12,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Mesh.h"
+#include "Water.h"
 #include "WindowManager.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -30,7 +31,8 @@ public:
 
 	std::string resourceDir;
 
-	// Models
+	// Models and geometry
+	Water water;
 	Mesh cube;
 
 	// Shaders
@@ -96,6 +98,10 @@ public:
 
 		// Initialize shaders
 		simple.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
+		
+		// Initialize ocean
+		water = Water(10, 5);
+		water.generateMesh();
 
 		// Initialize models
 		loadObj(cube);
@@ -169,26 +175,10 @@ public:
 		simple.setMat4("M", model);
 
 		// Draw the cube
-		cube.draw();
+		// cube.draw();
 
-		//float triangleVerts[] = {
-		//	0.0f,  1.0f, 0.0f,
-		//   -1.0f, -1.0f, 0.0f,
-		//	1.0f, -1.0f, 0.0f
-		//};
-		//unsigned int triangleVBO, triangleVAO;
-		//glGenVertexArrays(1, &triangleVAO);
-		//glGenBuffers(1, &triangleVBO);
-		//glBindVertexArray(triangleVAO);
-		//glBindBuffer(GL_ARRAY_BUFFER, triangleVBO);
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerts), triangleVerts, GL_STATIC_DRAW);
-		//glEnableVertexAttribArray(0);
-		//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-		//glBindVertexArray(0);
-
-		//glBindVertexArray(triangleVAO);
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glBindVertexArray(0);
+		// Draw the water
+		water.draw();
 
 		simple.unbind();
 	}

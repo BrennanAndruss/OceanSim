@@ -78,8 +78,6 @@ void Mesh::setupBuffers(std::vector<glm::vec3>& positions,
 	CHECKED_GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		numIndices * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW));
 
-	std::cout << "Number of indices: " << numIndices << std::endl;
-
 	// Unbind the vertex array object
 	CHECKED_GL_CALL(glBindVertexArray(0));
 }
@@ -148,11 +146,6 @@ void Mesh::setupBuffers(const tinyobj::shape_t& shape)
 	CHECKED_GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		numIndices * sizeof(unsigned int),
 		shape.mesh.indices.data(), GL_STATIC_DRAW));
-
-	std::cout << "Number of indices: " << numIndices << std::endl;
-	std::cout << "vaoID: " << vaoID << std::endl;
-	std::cout << "vboID: " << vboID << std::endl;
-	std::cout << "eboID: " << eboID << std::endl;
 
 	// Unbind the vertex array object
 	CHECKED_GL_CALL(glBindVertexArray(0));
