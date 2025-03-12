@@ -109,8 +109,9 @@ public:
 		waterShader.init(resourceDir + "/water.vert", resourceDir + "/water.frag");
 		
 		// Initialize ocean
-		water = Water(10, 10);
+		water = Water(100, 10);
 		water.generateMesh();
+		water.generateWaves();
 
 		// Initialize models
 		loadObj(cube);

@@ -6,6 +6,20 @@
 #include <vector>
 #include "Mesh.h"
 
+#define MAX_WAVES 2
+
+struct Wave
+{
+	float amplitude;
+	float frequency;
+	float phase;
+	// glm::vec2 direction;
+
+	Wave();
+	Wave(float wavelength, float amplitude, float speed);
+	~Wave();
+};
+
 class Water
 {
 public:
@@ -14,6 +28,9 @@ public:
 	~Water();
 
 	void generateMesh();
+	void generateWaves();
+	void setupWavesUbo();
+	void updateWavesUbo();
 	void draw() const;
 
 private:
@@ -23,6 +40,9 @@ private:
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> texCoords;
+
+	Wave waves[MAX_WAVES];
+	GLuint wavesUboID;
 };
 
 #endif // WATER_H

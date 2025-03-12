@@ -1,11 +1,29 @@
 #include "Water.h"
 
-Water::Water() : planeRes(10), planeLen(10) {};
+#pragma region Wave
+
+Wave::Wave() : amplitude(0.0f), frequency(0.0f), phase(0.0f) {};
+
+Wave::Wave(float wavelength, float amplitude, float speed)
+{
+	this->amplitude = amplitude;
+	this->frequency = 2.0f / wavelength;
+	this->phase = speed * frequency;
+	// this->direction
+}
+
+Wave::~Wave() {};
+
+Water::Water() : planeRes(10), planeLen(10), wavesUboID(0) {};
 
 Water::Water(int planeRes, int planeLen) 
-	: planeRes(planeRes), planeLen(planeLen) {};
+	: planeRes(planeRes), planeLen(planeLen), wavesUboID(0) {};
 
 Water::~Water() {};
+
+#pragma endregion
+
+#pragma region Water
 
 void Water::generateMesh()
 {
@@ -45,10 +63,43 @@ void Water::generateMesh()
 
 	// Set the mesh to dynamic, since the vertex data will change frequently
 	mesh.setDynamic(true);
+
+	// Send the mesh data to the GPU
 	mesh.setupBuffers(positions, normals, texCoords, indices);
+}
+
+void Water::generateWaves()
+{
+	// Initialize waves
+	waves[0] = Wave(4.0f, 1.0f, 1.5f);
+	waves[1] = Wave(2.0f, 0.5f, 1.5f);
+
+	// Send the waves to the GPU
+	setupWavesUbo();
+}
+
+void Water::setupWavesUbo()
+{
+	// Initialize UBO with wave data
+	glGenBuffers(1, &wavesUboID);
+	glBindBuffer(GL_UNIFORM_BUFFER, wavesUboID);
+	glBufferData(GL_UNIFORM_BUFFER, MAX_WAVES * sizeof(Wave), waves, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	// Bind UBO	to binding point 1
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, wavesUboID);
+}
+
+void Water::updateWavesUbo()
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, wavesUboID);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, MAX_WAVES * sizeof(Wave), waves);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Water::draw() const
 {
 	mesh.draw();
 }
+
+#pragma endregion
