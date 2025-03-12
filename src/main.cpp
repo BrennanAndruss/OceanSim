@@ -14,6 +14,7 @@
 #include "Mesh.h"
 #include "Water.h"
 #include "WindowManager.h"
+#include "Time.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
@@ -27,18 +28,25 @@ class Application : public EventCallbacks
 {
 public:
 
-	WindowManager* windowManager = nullptr;
-
 	std::string resourceDir;
+
+	// Singleton instances
+	WindowManager* windowManager = nullptr;
+	Time* time = nullptr;
 
 	// Models and geometry
 	Water water;
 	Mesh cube;
 
 	// Shaders
-	Shader simple;
+	Shader simpleShader;
+	Shader waterShader;
 
 	// Textures
+
+
+	// Animation data
+	float accumulatedTime = 0.0f;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -97,10 +105,11 @@ public:
 		glEnable(GL_DEPTH_TEST);
 
 		// Initialize shaders
-		simple.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
+		simpleShader.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
+		waterShader.init(resourceDir + "/water.vert", resourceDir + "/water.frag");
 		
 		// Initialize ocean
-		water = Water(10, 5);
+		water = Water(10, 10);
 		water.generateMesh();
 
 		// Initialize models
@@ -149,6 +158,11 @@ public:
 
 	void run()
 	{
+		// Update time
+		time->updateTime();
+		accumulatedTime += time->getDeltaTime();
+		accumulatedTime = fmod(accumulatedTime, 1000.0f);
+		
 		// Get current frame buffer size
 		int width, height;
 		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
@@ -163,24 +177,31 @@ public:
 
 		// View matrix
 		glm::mat4 view(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -6.0f));
+		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -16.0f));
+		view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 		// Initialize the model matrix
 		glm::mat4 model(1.0f);
 		
 		// Configure simple shader
-		simple.bind();
-		simple.setMat4("P", projection);
-		simple.setMat4("V", view);
-		simple.setMat4("M", model);
+		simpleShader.bind();
+		simpleShader.setMat4("P", projection);
+		simpleShader.setMat4("V", view);
+		simpleShader.setMat4("M", model);
 
 		// Draw the cube
 		// cube.draw();
+		simpleShader.unbind();
 
-		// Draw the water
+		// Configure water shader and draw the water
+		waterShader.bind();
+		waterShader.setMat4("P", projection);
+		waterShader.setMat4("V", view);
+		waterShader.setMat4("M", model);
+		waterShader.setFloat("time", accumulatedTime);
 		water.draw();
 
-		simple.unbind();
+		waterShader.unbind();
 	}
 };
 
@@ -206,6 +227,9 @@ int main(int argc, char *argv[])
 	// This is the code that will likely change program to program as you
 	// may need to initialize or set up different data and state
 	application.init();
+
+	// Set up time
+	application.time = Time::getInstance();
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(windowManager->getHandle()))
