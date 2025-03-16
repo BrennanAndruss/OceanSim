@@ -8,17 +8,23 @@
 
 #define MAX_WAVES 2
 
-struct Wave
+
+// Aligned for std140 alignment
+// Using vec4 for 16-byte alignment
+struct alignas(16) Wave
 {
+	glm::vec4 direction;	// {Dx, Dz, 0, 0}
 	float amplitude;
 	float frequency;
 	float phase;
-	// glm::vec2 direction;
 
 	Wave();
-	Wave(float wavelength, float amplitude, float speed);
+	Wave(float amplitude, float wavelength, float speed, glm::vec2 direction);
 	~Wave();
+
+	glm::vec2 getDirection() const;
 };
+
 
 class Water
 {

@@ -9,6 +9,7 @@
 #define DISABLE_OPENGL_ERROR_CHECKS
 
 #include "GLSL.h"
+#include "Camera.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "Mesh.h"
@@ -23,7 +24,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
 class Application : public EventCallbacks 
 {
 public:
@@ -33,6 +33,17 @@ public:
 	// Singleton instances
 	WindowManager* windowManager = nullptr;
 	Time* time = nullptr;
+
+	// Camera and window
+	Camera camera;
+	glm::vec3 moveDirection = glm::vec3(0.0f);
+
+	int screenWidth;
+	int screenHeight;
+
+	bool mouseCaptured = false;
+	bool firstMouse = true;
+	double xPrev, yPrev;
 
 	// Models and geometry
 	Water water;
@@ -54,22 +65,43 @@ public:
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
 		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			firstMouse = true;
+		}
 
-		}
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
+		if (key == GLFW_KEY_W)
 		{
-			
+			if (action == GLFW_PRESS) moveDirection.z += 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.z -= 1.0f;
 		}
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) 
+		if (key == GLFW_KEY_A)
 		{
-			
+			if (action == GLFW_PRESS) moveDirection.x -= 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.x += 1.0f;
 		}
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		if (key == GLFW_KEY_S)
 		{
+			if (action == GLFW_PRESS) moveDirection.z -= 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.z += 1.0f;
+		}
+		if (key == GLFW_KEY_D)
+		{
+			if (action == GLFW_PRESS) moveDirection.x += 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.x -= 1.0f;
+		}
+		if (key == GLFW_KEY_E)
+		{
+			if (action == GLFW_PRESS) moveDirection.y += 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.y -= 1.0f;
+		}
+		if (key == GLFW_KEY_Q)
+		{
+			if (action == GLFW_PRESS) moveDirection.y -= 1.0f;
+			if (action == GLFW_RELEASE) moveDirection.y += 1.0f;
+		}
 
-		}
 		if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		}
@@ -78,20 +110,49 @@ public:
 		}
 	}
 
-	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
+	void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 	{
-		double posX, posY;
-
-		if (action == GLFW_PRESS)
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 		{
-			 glfwGetCursorPos(window, &posX, &posY);
-			 std::cout << "Pos X " << posX << " Pos Y " << posY << std::endl;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
+	}
+
+	void mouseCallback(GLFWwindow* window, double xPos, double yPos)
+	{
+		if (firstMouse)
+		{
+			xPrev = xPos;
+			yPrev = yPos;
+			firstMouse = false;
+		}
+
+		// Calculate deltas
+		double xOffset = xPos - xPrev;
+		double yOffset = yPos - yPrev;
+		xPrev = xPos;
+		yPrev = yPos;
+
+		xOffset *= camera.sensitivity;
+		yOffset *= camera.sensitivity;
+		// Flip up/down rotation
+		yOffset *= -1;
+
+		// Update camera rotation
+		camera.updateRotation(xOffset, yOffset);
 	}
 
 	void resizeCallback(GLFWwindow *window, int width, int height)
 	{
 		glViewport(0, 0, width, height);
+		screenWidth = width;
+		screenHeight = height;
+		camera.updatePerspective();
+	}
+
+	void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+	{
+		camera.updateRotation(xOffset, yOffset);
 	}
 
 	void init()
@@ -104,12 +165,17 @@ public:
 		// Enable z-buffer test
 		glEnable(GL_DEPTH_TEST);
 
+		// Initialize camera
+		camera = Camera(glm::vec3(0.0f, 8.0f, 16.0f), &screenWidth, &screenHeight);
+		camera.setupMatricesUbo();
+		camera.updateRotation(0.0f, -30.0f);
+
 		// Initialize shaders
 		simpleShader.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
 		waterShader.init(resourceDir + "/water.vert", resourceDir + "/water.frag");
 		
 		// Initialize ocean
-		water = Water(100, 10);
+		water = Water(50, 10);
 		water.generateMesh();
 		water.generateWaves();
 
@@ -165,40 +231,48 @@ public:
 		accumulatedTime = fmod(accumulatedTime, 1000.0f);
 		
 		// Get current frame buffer size
-		int width, height;
-		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
-		glViewport(0, 0, width, height);
+		glfwGetFramebufferSize(windowManager->getHandle(), &screenWidth, &screenHeight);
+		glViewport(0, 0, screenWidth, screenHeight);
 
 		// Clear framebuffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Projection matrix
-		float aspect = width/(float)height;
+		//// Projection matrix
+		float aspect = screenWidth/(float)screenHeight;
 		glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 100.0f);
 
-		// View matrix
+		//// View matrix
 		glm::mat4 view(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -16.0f));
-		view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -5.0f));
+		// view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+		// Update camera position
+		camera.updatePosition(moveDirection, time->getDeltaTime());
 
 		// Initialize the model matrix
 		glm::mat4 model(1.0f);
+		// model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
 		
 		// Configure simple shader
+		model = glm::scale(model, glm::vec3(5.0f));
+
 		simpleShader.bind();
 		simpleShader.setMat4("P", projection);
-		simpleShader.setMat4("V", view);
-		simpleShader.setMat4("M", model);
+		// simpleShader.setMat4("V", view);
+		simpleShader.setMat4("V", camera.getViewMatrix());
+		simpleShader.setMat4("model", model);
 
 		// Draw the cube
 		// cube.draw();
 		simpleShader.unbind();
 
 		// Configure water shader and draw the water
+		model = glm::mat4(1.0f);
+
 		waterShader.bind();
-		waterShader.setMat4("P", projection);
-		waterShader.setMat4("V", view);
-		waterShader.setMat4("M", model);
+		//waterShader.setMat4("P", projection);
+		//waterShader.setMat4("V", view);
+		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
 		water.draw();
 
@@ -220,8 +294,11 @@ int main(int argc, char *argv[])
 
 	// Your main will always include a similar set up to establish your window
 	// and GL context, etc.
+	application.screenWidth = 640;
+	application.screenHeight = 480;
+
 	WindowManager* windowManager = WindowManager::getInstance();
-	windowManager->init(640, 480);
+	windowManager->init(application.screenWidth, application.screenHeight);
 	windowManager->setEventCallbacks(&application);
 	application.windowManager = windowManager;
 

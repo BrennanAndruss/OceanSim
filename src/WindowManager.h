@@ -30,8 +30,10 @@ class EventCallbacks
 public:
 
 	virtual void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) = 0;
-	virtual void mouseCallback(GLFWwindow *window, int button, int action, int mods) = 0;
+	virtual void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) = 0;
 	virtual void resizeCallback(GLFWwindow *window, int in_width, int in_height) = 0;
+	virtual void mouseCallback(GLFWwindow* window, double xPos, double yPos) = 0;
+	virtual void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) = 0;
 };
 
 // This class is responsible for all window management code, i.e. GLFW3 code
@@ -66,8 +68,10 @@ private:
 	//
 	// This is a common trick or `idiom` that makes it possible
 	static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
-	static void mouse_callback(GLFWwindow *window, int button, int action, int mods);
+	static void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
 	static void resize_callback(GLFWwindow *window, int in_width, int in_height);
+	static void mouse_callback(GLFWwindow* window, double xPos, double yPos);
+	static void scroll_callback(GLFWwindow* window, double xOffset, double yOffset);
 };
 
 #endif

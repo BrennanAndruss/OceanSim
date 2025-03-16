@@ -1,18 +1,39 @@
 #include "Water.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
+
 #pragma region Wave
 
-Wave::Wave() : amplitude(0.0f), frequency(0.0f), phase(0.0f) {};
+Wave::Wave() : amplitude(1.0f), frequency(1.0f), phase(1.0f), 
+	direction(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)) {};
 
-Wave::Wave(float wavelength, float amplitude, float speed)
+Wave::Wave(float amplitude, float wavelength, float speed, glm::vec2 direction)
 {
 	this->amplitude = amplitude;
-	this->frequency = 2.0f / wavelength;
+	this->frequency = glm::two_pi<float>() / wavelength;
 	this->phase = speed * frequency;
-	// this->direction
+	direction = glm::normalize(direction);
+	this->direction = glm::vec4(direction.x, direction.y, 0.0f, 0.0f);
 }
 
 Wave::~Wave() {};
+
+glm::vec2 Wave::getDirection() const
+{
+	return glm::vec2(direction.x, direction.y);
+}
+
+// Generates a flat wave with no effect on the water surface
+Wave flatWave()
+{
+	return Wave(0.0f, 1.0f, 0.0f, glm::vec2(0.0f, 0.0f));
+}
+
+#pragma endregion Wave
+
+
+#pragma region Water
 
 Water::Water() : planeRes(10), planeLen(10), wavesUboID(0) {};
 
@@ -20,10 +41,6 @@ Water::Water(int planeRes, int planeLen)
 	: planeRes(planeRes), planeLen(planeLen), wavesUboID(0) {};
 
 Water::~Water() {};
-
-#pragma endregion
-
-#pragma region Water
 
 void Water::generateMesh()
 {
@@ -71,8 +88,11 @@ void Water::generateMesh()
 void Water::generateWaves()
 {
 	// Initialize waves
-	waves[0] = Wave(4.0f, 1.0f, 1.5f);
-	waves[1] = Wave(2.0f, 0.5f, 1.5f);
+	waves[0] = Wave(1.0f, glm::two_pi<float>(), 1.0f, glm::vec2(1.0f, 0.0f));
+	waves[1] = Wave(1.0f, glm::two_pi<float>(), 1.0f, glm::vec2(0.0f, 1.0f));
+	//waves[1] = Wave();
+	//waves[2] = Wave();
+	//waves[3] = Wave();
 
 	// Send the waves to the GPU
 	setupWavesUbo();
@@ -102,4 +122,4 @@ void Water::draw() const
 	mesh.draw();
 }
 
-#pragma endregion
+#pragma endregion Water

@@ -60,8 +60,10 @@ bool WindowManager::init(int const width, int const height)
 	glfwSwapInterval(1);
 
 	glfwSetKeyCallback(windowHandle, key_callback);
-	glfwSetMouseButtonCallback(windowHandle, mouse_callback);
+	glfwSetMouseButtonCallback(windowHandle, mouse_button_callback);
 	glfwSetFramebufferSizeCallback(windowHandle, resize_callback);
+	glfwSetCursorPosCallback(windowHandle, mouse_callback);
+	glfwSetScrollCallback(windowHandle, scroll_callback);
 
 	return true;
 }
@@ -91,12 +93,12 @@ void WindowManager::key_callback(GLFWwindow * window, int key, int scancode, int
 	}
 }
 
-void WindowManager::mouse_callback(GLFWwindow * window, int button, int action, int mods)
+void WindowManager::mouse_button_callback(GLFWwindow * window, int button, int action, int mods)
 {
 	WindowManager* instance = WindowManager::getInstance();
 	if (instance && instance->callbacks)
 	{
-		instance->callbacks->mouseCallback(window, button, action, mods);
+		instance->callbacks->mouseButtonCallback(window, button, action, mods);
 	}
 }
 
@@ -106,5 +108,23 @@ void WindowManager::resize_callback(GLFWwindow * window, int in_width, int in_he
 	if (instance && instance->callbacks)
 	{
 		instance->callbacks->resizeCallback(window, in_width, in_height);
+	}
+}
+
+void WindowManager::mouse_callback(GLFWwindow* window, double xPos, double yPos)
+{
+	WindowManager* instance = WindowManager::getInstance();
+	if (instance && instance->callbacks)
+	{
+		instance->callbacks->mouseCallback(window, xPos, yPos);
+	}
+}
+
+void WindowManager::scroll_callback(GLFWwindow* window, double xOffset, double yOffset)
+{
+	WindowManager* instance = WindowManager::getInstance();
+	if (instance && instance->callbacks)
+	{
+		instance->callbacks->scrollCallback(window, xOffset, yOffset);
 	}
 }
