@@ -88,9 +88,9 @@ void Water::generateMesh()
 void Water::generateWaves()
 {
 	// Initialize waves
-	waves[0] = Wave(1.0f, glm::two_pi<float>(), 1.0f, glm::vec2(1.0f, 0.0f));
-	waves[1] = Wave(1.0f, glm::two_pi<float>(), 1.0f, glm::vec2(0.0f, 1.0f));
-	//waves[1] = Wave();
+	waves[0] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(0.0f, 1.0f));
+	waves[1] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(1.0f, 0.0f));
+	// waves[1] = Wave();
 	//waves[2] = Wave();
 	//waves[3] = Wave();
 

@@ -73,6 +73,11 @@ void Camera::updateCameraVectors()
 	this->up = glm::cross(this->right, this->front);
 }
 
+glm::vec3 Camera::getPosition() const
+{
+	return position;
+}
+
 glm::mat4 Camera::getViewMatrix() const
 {
 	return glm::lookAt(position, position + front, up);

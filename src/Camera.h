@@ -19,6 +19,7 @@ public:
 	void updatePosition(glm::vec3 moveDirection, float deltaTime);
 	void updateRotation(float xOffset, float yOffset);
 
+	glm::vec3 getPosition() const;
 	glm::mat4 getViewMatrix() const;
 	void setupMatricesUbo();
 	void updatePerspective();

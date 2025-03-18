@@ -65,6 +65,8 @@ public:
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
+
+		// Release the cursor to leave the window
 		if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -112,6 +114,7 @@ public:
 
 	void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 	{
+		// Capture the cursor to enable free rotation
 		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 		{
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -152,7 +155,8 @@ public:
 
 	void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 	{
-		camera.updateRotation(xOffset, yOffset);
+		// movement handled with mouse callback
+		// camera.updateRotation(xOffset, yOffset);
 	}
 
 	void init()
@@ -165,7 +169,7 @@ public:
 		// Enable z-buffer test
 		glEnable(GL_DEPTH_TEST);
 
-		// Initialize camera
+		// Initialize camera looking down the z-axis
 		camera = Camera(glm::vec3(0.0f, 8.0f, 16.0f), &screenWidth, &screenHeight);
 		camera.setupMatricesUbo();
 		camera.updateRotation(0.0f, -30.0f);
@@ -229,7 +233,7 @@ public:
 		time->updateTime();
 		accumulatedTime += time->getDeltaTime();
 		accumulatedTime = fmod(accumulatedTime, 1000.0f);
-		
+
 		// Get current frame buffer size
 		glfwGetFramebufferSize(windowManager->getHandle(), &screenWidth, &screenHeight);
 		glViewport(0, 0, screenWidth, screenHeight);
@@ -238,7 +242,7 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//// Projection matrix
-		float aspect = screenWidth/(float)screenHeight;
+		float aspect = screenWidth / (float)screenHeight;
 		glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 100.0f);
 
 		//// View matrix
@@ -252,14 +256,18 @@ public:
 		// Initialize the model matrix
 		glm::mat4 model(1.0f);
 		// model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
-		
+
 		// Configure simple shader
 		model = glm::scale(model, glm::vec3(5.0f));
+		model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 		simpleShader.bind();
-		simpleShader.setMat4("P", projection);
-		// simpleShader.setMat4("V", view);
-		simpleShader.setMat4("V", camera.getViewMatrix());
+		simpleShader.setVec3("lightDir", glm::vec3(0.0f, 0.0f, -1.0f));
+		simpleShader.setVec3("cameraPos", camera.getPosition());
+		simpleShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
+		simpleShader.setVec3("matDif", glm::vec3(1.0f, 1.0f, 1.0f));
+		simpleShader.setVec3("matSpec", glm::vec3(0.8f, 0.9f, 1.0f));
+		simpleShader.setFloat("matShine", 32.0f);
 		simpleShader.setMat4("model", model);
 
 		// Draw the cube
@@ -274,6 +282,12 @@ public:
 		//waterShader.setMat4("V", view);
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
+		waterShader.setVec3("lightDir", glm::vec3(0.0f, -0.75f, 1.0f));
+		waterShader.setVec3("cameraPos", camera.getPosition());
+		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
+		waterShader.setVec3("matDif", glm::vec3(0.1f, 0.3f, 0.6f));
+		waterShader.setVec3("matSpec", glm::vec3(0.7f, 0.8f, 0.9f));
+		waterShader.setFloat("matShine", 100.0f);
 		water.draw();
 
 		waterShader.unbind();
