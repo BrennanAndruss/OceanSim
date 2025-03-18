@@ -17,6 +17,8 @@
 #include "WindowManager.h"
 #include "Time.h"
 
+#include "stb_image.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
 
@@ -24,7 +26,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-class Application : public EventCallbacks 
+class Application : public EventCallbacks
 {
 public:
 
@@ -52,9 +54,18 @@ public:
 	// Shaders
 	Shader simpleShader;
 	Shader waterShader;
+	Shader cubemapShader;
 
 	// Textures
-
+	unsigned int cubemapTexture;
+	char* faces[6] = {
+		"right",
+		"left",
+		"top",
+		"bottom",
+		"front",
+		"back"
+	};
 
 	// Animation data
 	float accumulatedTime = 0.0f;
@@ -141,7 +152,7 @@ public:
 		// Flip up/down rotation
 		yOffset *= -1;
 
-		// Update camera rotation
+		// Update camera rotation and view matrix
 		camera.updateRotation(xOffset, yOffset);
 	}
 
@@ -150,6 +161,8 @@ public:
 		glViewport(0, 0, width, height);
 		screenWidth = width;
 		screenHeight = height;
+
+		// Update projection matrix
 		camera.updatePerspective();
 	}
 
@@ -177,6 +190,10 @@ public:
 		// Initialize shaders
 		simpleShader.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
 		waterShader.init(resourceDir + "/water.vert", resourceDir + "/water.frag");
+		cubemapShader.init(resourceDir + "/cubemap.vert", resourceDir + "/cubemap.frag");
+
+		// Initialize the skybox
+		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
 		
 		// Initialize ocean
 		water = Water(50, 10);
@@ -227,6 +244,39 @@ public:
 		}
 	}
 
+	unsigned int createSky(std::string dir, char* extension)
+	{
+		unsigned int textureID;
+		glGenTextures(1, &textureID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+		int width, height, nrChannels;
+		stbi_set_flip_vertically_on_load(false);
+		for (GLuint i = 0; i < 6; i++)
+		{
+			unsigned char* data = stbi_load((dir + faces[i] + extension).c_str(), 
+				&width, &height, &nrChannels, 0);
+			if (data)
+			{
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, 
+					width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			}
+			else
+			{
+				std::cout << "failed to load: " << (dir + faces[i] + extension) << "\n";
+			}
+		}
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		std::cout << "creating cube map any errors: " << glGetError() << "\n";
+		return textureID;
+	}
+
 	void run()
 	{
 		// Update time
@@ -241,16 +291,7 @@ public:
 		// Clear framebuffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//// Projection matrix
-		float aspect = screenWidth / (float)screenHeight;
-		glm::mat4 projection = glm::perspective(45.0f, aspect, 0.01f, 100.0f);
-
-		//// View matrix
-		glm::mat4 view(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, -1.0f, -5.0f));
-		// view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-		// Update camera position
+		// Update camera position and view matrix
 		camera.updatePosition(moveDirection, time->getDeltaTime());
 
 		// Initialize the model matrix
@@ -278,8 +319,6 @@ public:
 		model = glm::mat4(1.0f);
 
 		waterShader.bind();
-		//waterShader.setMat4("P", projection);
-		//waterShader.setMat4("V", view);
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
 		waterShader.setVec3("lightDir", glm::vec3(0.0f, -0.75f, 1.0f));
@@ -291,6 +330,21 @@ public:
 		water.draw();
 
 		waterShader.unbind();
+
+		// Configure cubemap shader
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(50.0f));
+
+		cubemapShader.bind();
+		cubemapShader.setMat4("model", model);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+
+		// Set the depth function to always draw the skybox
+		glDepthFunc(GL_LEQUAL);
+		cube.draw();
+		glDepthFunc(GL_LESS);
+
+		cubemapShader.unbind();
 	}
 };
 
