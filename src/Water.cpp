@@ -1,5 +1,6 @@
 #include "Water.h"
 
+#include <random>
 #include <glm/gtc/type_ptr.hpp>
 
 
@@ -85,14 +86,33 @@ void Water::generateMesh()
 	mesh.setupBuffers(positions, normals, texCoords, indices);
 }
 
-void Water::generateWaves()
+void Water::generateWaves(unsigned int seed)
 {
-	// Initialize waves
-	waves[0] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(0.0f, 1.0f));
-	waves[1] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(1.0f, 0.0f));
-	// waves[1] = Wave();
-	//waves[2] = Wave();
-	//waves[3] = Wave();
+	std::mt19937 generator(seed);
+
+	for (int i = 0; i < MAX_WAVES; i++)
+	{
+		// Define distributions for wave parameters
+		std::uniform_real_distribution<float> amplitudeDist(0.05f, 0.1f);
+		std::uniform_real_distribution<float> wavelengthDist(2.0f, 8.0f);
+		std::uniform_real_distribution<float> speedDist(0.5f, 2.0f);
+		std::uniform_real_distribution<float> directionDist(-1.0f, 1.0f);
+		
+		// Generate random wave parameters
+		float amplitude = amplitudeDist(generator);
+		float wavelength = wavelengthDist(generator);
+		float speed = speedDist(generator);
+		glm::vec2 direction = glm::vec2(directionDist(generator), directionDist(generator));
+
+		waves[i] = Wave(amplitude, wavelength, speed, direction);
+	}
+
+	//// Initialize waves
+	//waves[0] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(0.0f, 1.0f));
+	//waves[1] = Wave(0.5f, glm::two_pi<float>(), 1.0f, glm::vec2(1.0f, 0.0f));
+	//// waves[1] = Wave();
+	////waves[2] = Wave();
+	////waves[3] = Wave();
 
 	// Send the waves to the GPU
 	setupWavesUbo();

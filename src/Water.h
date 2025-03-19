@@ -6,7 +6,7 @@
 #include <vector>
 #include "Mesh.h"
 
-#define MAX_WAVES 2
+#define MAX_WAVES 16
 
 
 // Aligned for std140 alignment
@@ -34,7 +34,7 @@ public:
 	~Water();
 
 	void generateMesh();
-	void generateWaves();
+	void generateWaves(unsigned int seed);
 	void setupWavesUbo();
 	void updateWavesUbo();
 	void draw() const;

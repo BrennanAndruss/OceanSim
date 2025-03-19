@@ -70,6 +70,9 @@ public:
 	// Animation data
 	float accumulatedTime = 0.0f;
 
+	// Debug flags
+	bool debugNormals = false;
+
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -87,39 +90,43 @@ public:
 		if (key == GLFW_KEY_W)
 		{
 			if (action == GLFW_PRESS) moveDirection.z += 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.z -= 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.z -= 1.0f;
 		}
 		if (key == GLFW_KEY_A)
 		{
 			if (action == GLFW_PRESS) moveDirection.x -= 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.x += 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.x += 1.0f;
 		}
 		if (key == GLFW_KEY_S)
 		{
 			if (action == GLFW_PRESS) moveDirection.z -= 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.z += 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.z += 1.0f;
 		}
 		if (key == GLFW_KEY_D)
 		{
 			if (action == GLFW_PRESS) moveDirection.x += 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.x -= 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.x -= 1.0f;
 		}
 		if (key == GLFW_KEY_E)
 		{
 			if (action == GLFW_PRESS) moveDirection.y += 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.y -= 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.y -= 1.0f;
 		}
 		if (key == GLFW_KEY_Q)
 		{
 			if (action == GLFW_PRESS) moveDirection.y -= 1.0f;
-			if (action == GLFW_RELEASE) moveDirection.y += 1.0f;
+			else if (action == GLFW_RELEASE) moveDirection.y += 1.0f;
 		}
 
-		if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
-			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		if (key == GLFW_KEY_N)
+		{
+			if (action == GLFW_PRESS) debugNormals = true;
+			else if (action == GLFW_RELEASE) debugNormals = false;
 		}
-		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
-			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		if (key == GLFW_KEY_Z)
+		{
+			if (action == GLFW_PRESS) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			else if (action == GLFW_RELEASE) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 	}
 
@@ -183,9 +190,9 @@ public:
 		glEnable(GL_DEPTH_TEST);
 
 		// Initialize camera looking down the z-axis
-		camera = Camera(glm::vec3(0.0f, 8.0f, 16.0f), &screenWidth, &screenHeight);
+		camera = Camera(glm::vec3(0.0f, 6.0f, 20.0f), &screenWidth, &screenHeight);
 		camera.setupMatricesUbo();
-		camera.updateRotation(0.0f, -30.0f);
+		camera.updateRotation(0.0f, -15.0f);
 
 		// Initialize shaders
 		simpleShader.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
@@ -196,9 +203,9 @@ public:
 		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
 		
 		// Initialize ocean
-		water = Water(50, 10);
+		water = Water(100, 20);
 		water.generateMesh();
-		water.generateWaves();
+		water.generateWaves(0);
 
 		// Initialize models
 		loadObj(cube);
@@ -303,7 +310,7 @@ public:
 		model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 		simpleShader.bind();
-		simpleShader.setVec3("lightDir", glm::vec3(0.0f, 0.0f, -1.0f));
+		simpleShader.setVec3("lightDir", glm::vec3(0.0f, -1.0f, 1.0f));
 		simpleShader.setVec3("cameraPos", camera.getPosition());
 		simpleShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
 		simpleShader.setVec3("matDif", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -321,12 +328,13 @@ public:
 		waterShader.bind();
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
-		waterShader.setVec3("lightDir", glm::vec3(0.0f, -0.75f, 1.0f));
+		waterShader.setVec3("lightDir", glm::vec3(0.0f, -0.7f, 1.0f));
 		waterShader.setVec3("cameraPos", camera.getPosition());
 		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
 		waterShader.setVec3("matDif", glm::vec3(0.1f, 0.3f, 0.6f));
 		waterShader.setVec3("matSpec", glm::vec3(0.7f, 0.8f, 0.9f));
 		waterShader.setFloat("matShine", 100.0f);
+		waterShader.setBool("debugNormals", debugNormals);
 		water.draw();
 
 		waterShader.unbind();

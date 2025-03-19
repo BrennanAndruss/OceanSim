@@ -15,9 +15,17 @@ uniform float matShine;
 uniform vec3 lightDir;
 uniform vec3 cameraPos;
 
+// Debug flags
+uniform bool debugNormals;
+
 
 void main()
 {
+	if (debugNormals) {
+		fragColor = vec4(normalize(fragNor) * 0.5 + 0.5, 1.0);
+		return;
+	}
+
 	vec3 normal = normalize(fragNor);
 	vec3 light = normalize(-lightDir);
 
@@ -40,7 +48,4 @@ void main()
 
 	vec3 reflection = ambient + diffuse + specular;
 	fragColor = vec4(reflection, 1.0);
-
-	// Debug view
-	// fragColor = vec4(normal * 0.5 + 0.5, 1.0);
 }
