@@ -207,7 +207,7 @@ public:
 		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
 		
 		// Initialize ocean
-		water = Water(100, 20);
+		water = Water(200, 20);
 		water.generateMesh();
 		water.generateWaves(1);
 
@@ -314,13 +314,14 @@ public:
 		model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 		simpleShader.bind();
+		simpleShader.setMat4("model", model);
 		simpleShader.setVec3("lightDir", lightDir);
 		simpleShader.setVec3("cameraPos", camera.getPosition());
 		simpleShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
 		simpleShader.setVec3("matDif", glm::vec3(1.0f, 1.0f, 1.0f));
 		simpleShader.setVec3("matSpec", glm::vec3(0.8f, 0.9f, 1.0f));
 		simpleShader.setFloat("matShine", 32.0f);
-		simpleShader.setMat4("model", model);
+		
 
 		// Draw the cube
 		// cube.draw();
@@ -332,6 +333,8 @@ public:
 		waterShader.bind();
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
+		waterShader.setInt("waveFunction", STEEP_SINE);
+
 		waterShader.setVec3("lightDir", lightDir);
 		waterShader.setVec3("cameraPos", camera.getPosition());
 		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));

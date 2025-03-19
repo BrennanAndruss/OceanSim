@@ -25,12 +25,17 @@ struct Wave
 	float amplitude;
 	float frequency;
 	float phase;
+	float steepness;
 };
 
 layout(std140, binding = 1) uniform Waves
 {
 	Wave waves[MAX_WAVES];
 };
+
+uniform int waveFunction;
+const int SINE = 0;
+const int STEEP_SINE = 1;
 
 uniform float time;
 
@@ -51,16 +56,45 @@ vec3 sinePartials(vec3 v, Wave w)
 	return vec3(partials.x, 1.0, partials.y);
 }
 
+float steepSine(vec3 v, Wave w)
+{
+	float xz = dot(v.xz, w.direction.xy);
+	return 2 * w.amplitude * pow((sin(xz * w.frequency + time * w.phase) + 1.0) / 2.0, w.steepness);
+}
+
+vec3 steepSinePartials(vec3 v, Wave w)
+{
+	vec2 wDir = w.direction.xy;	// {Dx, Dz}
+	float xz = dot(v.xz, wDir);
+
+	// Calculate partial derivatives of the steep sine function
+	float powTerm = pow((sin(xz * w.frequency + time * w.phase) + 1.0) / 2.0, w.steepness - 1.0);
+	float scaleFactor = w.steepness * w.frequency * w.amplitude * powTerm;
+	
+	vec2 partials = scaleFactor * wDir * cos(xz * w.frequency + time * w.phase);
+	return vec3(partials.x, 1.0, partials.y);
+}
+
 vec3 calculateDisplacement(vec3 v, Wave w)
 {
 	// Sine waves
-	return vec3(0.0, sine(v, w), 0.0);
+	if (waveFunction == SINE)
+	{
+		return vec3(0.0, sine(v, w), 0.0);
+	}
+	// Steep sine waves
+	return vec3(0.0, steepSine(v, w), 0.0);
 }
 
 vec3 calculatePartials(vec3 v, Wave w)
 {
 	// Sine waves
-	return sinePartials(v, w);
+	if (waveFunction == SINE)
+	{
+		return sinePartials(v, w);
+	}
+	// Steep sine waves
+	return steepSinePartials(v, w);
 }
 
 void main()

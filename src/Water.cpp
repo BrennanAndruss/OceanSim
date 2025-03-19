@@ -6,14 +6,16 @@
 
 #pragma region Wave
 
-Wave::Wave() : amplitude(1.0f), frequency(1.0f), phase(1.0f), 
+Wave::Wave() : amplitude(1.0f), frequency(1.0f), phase(1.0f), steepness(1.0f),
 	direction(glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)) {};
 
-Wave::Wave(float amplitude, float wavelength, float speed, glm::vec2 direction)
+Wave::Wave(float amplitude, float wavelength, float speed, 
+	float steepness, glm::vec2 direction)
 {
 	this->amplitude = amplitude;
 	this->frequency = glm::two_pi<float>() / wavelength;
 	this->phase = speed * frequency;
+	this->steepness = steepness;
 	direction = glm::normalize(direction);
 	this->direction = glm::vec4(direction.x, direction.y, 0.0f, 0.0f);
 }
@@ -28,7 +30,7 @@ glm::vec2 Wave::getDirection() const
 // Generates a flat wave with no effect on the water surface
 Wave flatWave()
 {
-	return Wave(0.0f, 1.0f, 0.0f, glm::vec2(0.0f, 0.0f));
+	return Wave(0.0f, 1.0f, 0.0f, 0.0f, glm::vec2(0.0f, 0.0f));
 }
 
 #pragma endregion Wave
@@ -94,7 +96,10 @@ void Water::generateWaves(unsigned int seed)
 	std::uniform_real_distribution<float> amplitudeDist(0.05f, 0.1f);
 	std::uniform_real_distribution<float> wavelengthDist(2.0f, 8.0f);
 	std::uniform_real_distribution<float> speedDist(0.5f, 2.0f);
-	std::uniform_real_distribution<float> directionDist(-1.0f, 1.0f);
+	std::uniform_real_distribution<float> steepnessDist(1.0f, 4.0f);
+	std::uniform_real_distribution<float> angleDist(-glm::half_pi<float>(), glm::half_pi<float>());
+
+	float baseAngle = 0.0f;
 
 	for (int i = 0; i < MAX_WAVES; i++)
 	{
@@ -102,9 +107,12 @@ void Water::generateWaves(unsigned int seed)
 		float amplitude = amplitudeDist(generator);
 		float wavelength = wavelengthDist(generator);
 		float speed = speedDist(generator);
-		glm::vec2 direction = glm::vec2(directionDist(generator), directionDist(generator));
+		float steepness = steepnessDist(generator);
+		
+		float angle = baseAngle + angleDist(generator);
+		glm::vec2 direction = glm::vec2(sin(angle), -cos(angle));
 
-		waves[i] = Wave(amplitude, wavelength, speed, direction);
+		waves[i] = Wave(amplitude, wavelength, speed, steepness, direction);
 	}
 
 	// Send the waves to the GPU

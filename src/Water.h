@@ -9,6 +9,12 @@
 #define MAX_WAVES 16
 
 
+enum WaveFunction
+{
+	SINE,
+	STEEP_SINE,
+};
+
 // Aligned for std140 alignment
 // Using vec4 for 16-byte alignment
 struct alignas(16) Wave
@@ -17,9 +23,11 @@ struct alignas(16) Wave
 	float amplitude;
 	float frequency;
 	float phase;
+	float steepness;
 
 	Wave();
-	Wave(float amplitude, float wavelength, float speed, glm::vec2 direction);
+	Wave(float amplitude, float wavelength, float speed, 
+		float steepness, glm::vec2 direction);
 	~Wave();
 
 	glm::vec2 getDirection() const;
