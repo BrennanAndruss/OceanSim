@@ -47,6 +47,9 @@ public:
 	bool firstMouse = true;
 	double xPrev, yPrev;
 
+	// Directional light
+	glm::vec3 lightDir = glm::vec3(0.0f, -0.7f, 1.0f);
+
 	// Models and geometry
 	Water water;
 	Mesh cube;
@@ -72,6 +75,7 @@ public:
 
 	// Debug flags
 	bool debugNormals = false;
+
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -205,7 +209,7 @@ public:
 		// Initialize ocean
 		water = Water(100, 20);
 		water.generateMesh();
-		water.generateWaves(0);
+		water.generateWaves(1);
 
 		// Initialize models
 		loadObj(cube);
@@ -310,7 +314,7 @@ public:
 		model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 		simpleShader.bind();
-		simpleShader.setVec3("lightDir", glm::vec3(0.0f, -1.0f, 1.0f));
+		simpleShader.setVec3("lightDir", lightDir);
 		simpleShader.setVec3("cameraPos", camera.getPosition());
 		simpleShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
 		simpleShader.setVec3("matDif", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -328,15 +332,15 @@ public:
 		waterShader.bind();
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
-		waterShader.setVec3("lightDir", glm::vec3(0.0f, -0.7f, 1.0f));
+		waterShader.setVec3("lightDir", lightDir);
 		waterShader.setVec3("cameraPos", camera.getPosition());
 		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
 		waterShader.setVec3("matDif", glm::vec3(0.1f, 0.3f, 0.6f));
 		waterShader.setVec3("matSpec", glm::vec3(0.7f, 0.8f, 0.9f));
 		waterShader.setFloat("matShine", 100.0f);
 		waterShader.setBool("debugNormals", debugNormals);
+		
 		water.draw();
-
 		waterShader.unbind();
 
 		// Configure cubemap shader

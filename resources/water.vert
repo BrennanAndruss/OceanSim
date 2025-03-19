@@ -41,16 +41,14 @@ float sine(vec3 v, Wave w)
 	return w.amplitude * sin(xz * w.frequency + time * w.phase);
 }
 
-vec3 sineNormal(vec3 v, Wave w)
+vec3 sinePartials(vec3 v, Wave w)
 {
 	vec2 wDir = w.direction.xy;	// {Dx, Dz}
 	float xz = dot(v.xz, wDir);
 
 	// Calculate partial derivatives of the sine function
 	vec2 partials = w.frequency * w.amplitude * wDir * cos(xz * w.frequency + time * w.phase);
-
-	// Calculate the normal using the cross product of the partial derivatives
-	return vec3(-partials.x, 1.0, -partials.y);
+	return vec3(partials.x, 1.0, partials.y);
 }
 
 vec3 calculateDisplacement(vec3 v, Wave w)
@@ -59,30 +57,31 @@ vec3 calculateDisplacement(vec3 v, Wave w)
 	return vec3(0.0, sine(v, w), 0.0);
 }
 
-vec3 calculateNormal(vec3 v, Wave w)
+vec3 calculatePartials(vec3 v, Wave w)
 {
 	// Sine waves
-	return sineNormal(v, w);
+	return sinePartials(v, w);
 }
 
 void main()
 {
+	// H(x, z, t) = sum of sines
+	// P(x, z, t) = [x, H(x, z, t), z]
 	vec3 p = aPos;
-	vec3 tangent = vec3(1.0, 0.0, 0.0);
-	vec3 binormal = vec3(0.0, 0.0, 1.0);
+	vec3 partials = vec3(0.0);
 
 	// Sum displacement and partial derivatives of all waves
 	for (int i = 0; i < MAX_WAVES; i++)
 	{
 		p += calculateDisplacement(aPos, waves[i]);
-		
-		vec3 waveNor = calculateNormal(aPos, waves[i]);
-		tangent.y += waveNor.x;
-		binormal.y += waveNor.z;
+		partials += calculatePartials(aPos, waves[i]);
 	}
 
-	// Compute the final normal by crossing the binormal and tangent vectors
-	vec3 n = normalize(cross(binormal, tangent));
+	// Calculate the normal by crossing the summed binormal and tangent vectors
+	// B = [0, pd/pdz{P}, 1]
+	// T = [1, pd/pdx{P}, 0]
+	// N = B x T = [-pd/pdx{P}, 1, -pd/pdz{P}]
+	vec3 n = normalize(vec3(-partials.x, 1.0, -partials.z));
 
 	gl_Position = projection * view * model * vec4(p, 1.0);
 
