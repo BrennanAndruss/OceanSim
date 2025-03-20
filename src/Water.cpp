@@ -33,7 +33,7 @@ Wave flatWave()
 	return Wave(0.0f, 1.0f, 0.0f, 0.0f, glm::vec2(0.0f, 0.0f));
 }
 
-#pragma endregion Wave
+#pragma endregion
 
 
 #pragma region Water
@@ -143,4 +143,4 @@ void Water::draw() const
 	mesh.draw();
 }
 
-#pragma endregion Water
+#pragma endregion

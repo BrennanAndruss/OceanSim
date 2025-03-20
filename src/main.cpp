@@ -13,6 +13,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Mesh.h"
+#include "GameObject.h"
 #include "Water.h"
 #include "WindowManager.h"
 #include "Time.h"
@@ -50,9 +51,11 @@ public:
 	// Directional light
 	glm::vec3 lightDir = glm::vec3(0.0f, -0.7f, 1.0f);
 
-	// Models and geometry
-	Water water;
+	// Meshes
 	Mesh cube;
+
+	// Materials
+	Material cubeMaterial;
 
 	// Shaders
 	Shader simpleShader;
@@ -69,6 +72,10 @@ public:
 		"front",
 		"back"
 	};
+
+	// Game objects
+	Water water;
+	GameObject cube1;
 
 	// Animation data
 	float accumulatedTime = 0.0f;
@@ -205,14 +212,26 @@ public:
 
 		// Initialize the skybox
 		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
-		
+
+		initGameObjects();
+	}
+
+	void initGameObjects()
+	{
 		// Initialize ocean
 		water = Water(200, 20);
 		water.generateMesh();
 		water.generateWaves(1);
 
-		// Initialize models
+		// Load the cube mesh
 		loadObj(cube);
+
+		// Initialize the cube material and game object
+		cubeMaterial = Material(&simpleShader, nullptr, glm::vec3(0.1f, 0.1f, 0.2f),
+			glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
+
+		cube1 = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), 
+			glm::vec3(5.0f)), &cube, &cubeMaterial);
 	}
 
 	void loadObj(Mesh& mesh)
@@ -255,7 +274,7 @@ public:
 		}
 	}
 
-	unsigned int createSky(std::string dir, char* extension)
+	unsigned int createSky(std::string dir, std::string extension)
 	{
 		unsigned int textureID;
 		glGenTextures(1, &textureID);
@@ -305,29 +324,11 @@ public:
 		// Update camera position and view matrix
 		camera.updatePosition(moveDirection, time->getDeltaTime());
 
-		// Initialize the model matrix
-		glm::mat4 model(1.0f);
-		// model = glm::translate(model, glm::vec3(0.0f, 0.0f, -5.0f));
-
-		// Configure simple shader
-		model = glm::scale(model, glm::vec3(5.0f));
-		model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-		simpleShader.bind();
-		simpleShader.setMat4("model", model);
-		simpleShader.setVec3("lightDir", lightDir);
-		simpleShader.setVec3("cameraPos", camera.getPosition());
-		simpleShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
-		simpleShader.setVec3("matDif", glm::vec3(1.0f, 1.0f, 1.0f));
-		simpleShader.setVec3("matSpec", glm::vec3(0.8f, 0.9f, 1.0f));
-		simpleShader.setFloat("matShine", 32.0f);
-		
-
-		// Draw the cube
-		// cube.draw();
-		simpleShader.unbind();
+		// Draw game objects
+		cube1.draw(lightDir, camera.getPosition());
 
 		// Configure water shader and draw the water
+		glm::mat4 model(1.0f);
 		model = glm::mat4(1.0f);
 
 		waterShader.bind();
@@ -338,7 +339,7 @@ public:
 		waterShader.setVec3("lightDir", lightDir);
 		waterShader.setVec3("cameraPos", camera.getPosition());
 		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
-		waterShader.setVec3("matDif", glm::vec3(0.1f, 0.3f, 0.6f));
+		waterShader.setVec3("matDif", glm::vec3(0.17f, 0.45f, 0.79f));
 		waterShader.setVec3("matSpec", glm::vec3(0.7f, 0.8f, 0.9f));
 		waterShader.setFloat("matShine", 100.0f);
 		waterShader.setBool("debugNormals", debugNormals);

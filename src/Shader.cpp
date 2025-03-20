@@ -104,6 +104,11 @@ void Shader::unbind()
 	CHECKED_GL_CALL(glUseProgram(0));
 }
 
+GLuint Shader::getPid() const
+{
+	return pid;
+}
+
 void Shader::setBool(const std::string& name, int value) const
 {
 	CHECKED_GL_CALL(glUniform1i(glGetUniformLocation(pid, name.c_str()), value));
