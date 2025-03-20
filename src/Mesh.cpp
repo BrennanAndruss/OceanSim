@@ -171,6 +171,45 @@ void Mesh::updateBuffers(std::vector<glm::vec3>& positions,
 		vertBuf.size() * sizeof(float), vertBuf.data()));
 }
 
+void Mesh::generateBBox(std::vector<glm::vec3>& positions)
+{
+	// Initialize the bounding box with extreme values
+	bbox.min = glm::vec3(FLT_MAX);
+	bbox.max = glm::vec3(-FLT_MAX);
+
+	for (size_t i = 0; i < positions.size(); i++)
+	{
+		bbox.min.x = std::min(bbox.min.x, positions[i].x);
+		bbox.min.y = std::min(bbox.min.y, positions[i].y);
+		bbox.min.z = std::min(bbox.min.z, positions[i].z);
+		bbox.max.x = std::max(bbox.max.x, positions[i].x);
+		bbox.max.y = std::max(bbox.max.y, positions[i].y);
+		bbox.max.z = std::max(bbox.max.z, positions[i].z);
+	}
+}
+
+void Mesh::generateBBox(std::vector<float>& positions)
+{
+	// Initialize the bounding box with extreme values
+	bbox.min = glm::vec3(FLT_MAX);
+	bbox.max = glm::vec3(-FLT_MAX);
+
+	for (size_t i = 0; i < positions.size(); i += 3)
+	{
+		bbox.min.x = std::min(bbox.min.x, positions[i]);
+		bbox.min.y = std::min(bbox.min.y, positions[i + 1]);
+		bbox.min.z = std::min(bbox.min.z, positions[i + 2]);
+		bbox.max.x = std::max(bbox.max.x, positions[i]);
+		bbox.max.y = std::max(bbox.max.y, positions[i + 1]);
+		bbox.max.z = std::max(bbox.max.z, positions[i + 2]);
+	}
+}
+
+BBox Mesh::getBBox() const
+{
+	return bbox;
+}
+
 void Mesh::draw() const
 {
 	CHECKED_GL_CALL(glBindVertexArray(vaoID));

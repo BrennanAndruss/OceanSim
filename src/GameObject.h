@@ -20,6 +20,7 @@ struct Transform
 	~Transform();
 
 	glm::mat4 getCompositeTransform() const;
+	glm::mat4 getCompositeTransform(glm::vec3 center) const;
 };
 
 struct Material

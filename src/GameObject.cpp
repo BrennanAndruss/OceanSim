@@ -15,6 +15,7 @@ Transform::Transform(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale)
 Transform::~Transform() {}
 
 // Returns the composited transformation matrix
+// Rotates around the origin
 glm::mat4 Transform::getCompositeTransform() const
 {
 	glm::mat4 model(1.0f);
@@ -26,6 +27,23 @@ glm::mat4 Transform::getCompositeTransform() const
 	model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 	
 	model = glm::scale(model, scale);
+
+	return model;
+}
+
+// Returns the composited transformation matrix
+// Rotates around the center of the object
+glm::mat4 Transform::getCompositeTransform(glm::vec3 center) const
+{
+	glm::mat4 model(1.0f);
+
+	model = glm::translate(model, -center);
+
+	model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+	model = glm::scale(model, center + translation);
 
 	return model;
 }

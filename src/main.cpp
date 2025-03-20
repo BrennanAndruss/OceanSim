@@ -265,7 +265,7 @@ public:
 		loadMultishapeObj(dummyMeshes, resourceDir + "/dummy.obj");
 
 		dummyMaterial = Material(&simpleShader, nullptr, glm::vec3(0.3f, 0.2f, 0.1f),
-			glm::vec3(0.7f, 0.6f, 0.5f), glm::vec3(0.2f, 0.15f, 0.1f), 16.0f);
+			glm::vec3(0.9f, 0.8f, 0.6f), glm::vec3(0.2f, 0.15f, 0.1f), 16.0f);
 
 		// Create the dummy game objects
 		for (size_t i = 0; i < dummyMeshes.size(); i++)
@@ -275,8 +275,15 @@ public:
 				&dummyMeshes[i], &dummyMaterial));
 		}
 
+		// Adjust specific transforms to pose the dummy
+		// (tried to get this working with bboxes but had problems so hacked it in)
+		dummyObjects[11].transform.rotation = glm::vec3(15.0f, 0.0f, 0.0f);
+		dummyObjects[11].transform.translation = glm::vec3(0.0f, 25.0f, 0.0f);
+		dummyObjects[5].transform.rotation = glm::vec3(-10.0f, 0.0f, 0.0f);
+		dummyObjects[5].transform.translation = glm::vec3(0.0f, -17.0f, 0.0f);
+
 		// Create a hierarchy for the dummy, starting with the waist
-		dummyRootObject = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f),
+		dummyRootObject = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.33f),
 			glm::vec3(-90.0f, 0.0f, 0.0f), glm::vec3(0.02f, 0.02f, 0.02f)),
 			nullptr, nullptr);
 
@@ -312,6 +319,7 @@ public:
 		else
 		{
 			mesh.setupBuffers(shapes[0]);
+			mesh.generateBBox(shapes[0].mesh.positions);
 		}
 	}
 
@@ -332,6 +340,7 @@ public:
 			for (size_t i = 0; i < shapes.size(); i++)
 			{
 				model[i].setupBuffers(shapes[i]);
+				model[i].generateBBox(shapes[i].mesh.positions);
 			}
 		}
 	}
@@ -405,7 +414,7 @@ public:
 		glm::vec3 displacement = water.getDisplacement(
 			surfboard1.transform.translation, accumulatedTime);
 		surfboard1.transform.translation = displacement;
-		dummyRoot.gameObject->transform.translation = displacement;
+		dummyRoot.gameObject->transform.translation.y = displacement.y;
 
 		// Draw game objects
 		surfboard1.draw(lightDir, camera.getPosition());
