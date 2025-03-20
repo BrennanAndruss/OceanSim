@@ -5,6 +5,7 @@
 
 #include <vector>
 #include "Mesh.h"
+#include "Time.h"
 
 #define MAX_WAVES 16
 
@@ -37,12 +38,19 @@ struct alignas(16) Wave
 class Water
 {
 public:
+	WaveFunction waveFunction;
+
 	Water();
 	Water(int planeRes, int planeLen);
 	~Water();
 
 	void generateMesh();
 	void generateWaves(unsigned int seed);
+
+	float sine(glm::vec3 position, Wave w, float time) const;
+	float steepSine(glm::vec3 position, Wave w, float time) const;
+	glm::vec3 getDisplacement(glm::vec3 position, float time) const;
+
 	void setupWavesUbo();
 	void updateWavesUbo();
 	void draw() const;

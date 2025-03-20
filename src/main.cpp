@@ -229,7 +229,8 @@ public:
 	void initGameObjects()
 	{
 		// Initialize ocean
-		water = Water(200, 20);
+		water = Water(500, 50);
+		water.waveFunction = WaveFunction::STEEP_SINE;
 		water.generateMesh();
 		water.generateWaves(1);
 
@@ -252,7 +253,7 @@ public:
 			glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
 
 		surfboard1 = GameObject(Transform(glm::vec3(0.0f, 1.0f, 0.0f), 
-			glm::vec3(0.0f), glm::vec3(2.0f)), &surfboard, &surfboardMaterial);
+			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
 	}
 
 	void loadObj(Mesh& mesh, std::string dir)
@@ -343,6 +344,10 @@ public:
 		// Update camera position and view matrix
 		camera.updatePosition(moveDirection, time->getDeltaTime());
 
+		// Update game objects
+		surfboard1.transform.translation = water.getDisplacement(
+			surfboard1.transform.translation, accumulatedTime);
+
 		// Draw game objects
 		// cube1.draw(lightDir, camera.getPosition());
 		surfboard1.draw(lightDir, camera.getPosition());
@@ -354,7 +359,7 @@ public:
 		waterShader.bind();
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
-		waterShader.setInt("waveFunction", STEEP_SINE);
+		waterShader.setInt("waveFunction", water.waveFunction);
 
 		waterShader.setVec3("lightDir", lightDir);
 		waterShader.setVec3("cameraPos", camera.getPosition());

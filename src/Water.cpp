@@ -30,7 +30,7 @@ glm::vec2 Wave::getDirection() const
 // Generates a flat wave with no effect on the water surface
 Wave flatWave()
 {
-	return Wave(0.0f, 1.0f, 0.0f, 0.0f, glm::vec2(0.0f, 0.0f));
+	return Wave(0.0f, 1.0f, 0.0f, 1.0f, glm::vec2(1.0f, 0.0f));
 }
 
 #pragma endregion
@@ -38,10 +38,10 @@ Wave flatWave()
 
 #pragma region Water
 
-Water::Water() : planeRes(10), planeLen(10), wavesUboID(0) {};
+Water::Water() : planeRes(10), planeLen(10), waveFunction(SINE), wavesUboID(0) {};
 
 Water::Water(int planeRes, int planeLen) 
-	: planeRes(planeRes), planeLen(planeLen), wavesUboID(0) {};
+	: planeRes(planeRes), planeLen(planeLen), waveFunction(SINE), wavesUboID(0) {};
 
 Water::~Water() {};
 
@@ -93,11 +93,12 @@ void Water::generateWaves(unsigned int seed)
 	std::mt19937 generator(seed);
 
 	// Define distributions for wave parameters
-	std::uniform_real_distribution<float> amplitudeDist(0.05f, 0.1f);
+	std::uniform_real_distribution<float> amplitudeDist(0.01f, 0.05f);
 	std::uniform_real_distribution<float> wavelengthDist(2.0f, 8.0f);
 	std::uniform_real_distribution<float> speedDist(0.5f, 2.0f);
 	std::uniform_real_distribution<float> steepnessDist(1.0f, 4.0f);
-	std::uniform_real_distribution<float> angleDist(-glm::half_pi<float>(), glm::half_pi<float>());
+	std::uniform_real_distribution<float> angleDist(
+		-glm::quarter_pi<float>(), glm::quarter_pi<float>());
 
 	float baseAngle = 0.0f;
 
@@ -117,6 +118,42 @@ void Water::generateWaves(unsigned int seed)
 
 	// Send the waves to the GPU
 	setupWavesUbo();
+}
+
+float Water::sine(glm::vec3 position, Wave w, float time) const
+{
+	float xz = glm::dot(glm::vec2(position.x, position.z), w.getDirection());
+	return w.amplitude * sin(xz * w.frequency + time * w.phase);
+}
+
+float Water::steepSine(glm::vec3 position, Wave w, float time) const
+{
+	float xz = glm::dot(glm::vec2(position.x, position.z), w.getDirection());
+	return 2.0f * w.amplitude * 
+		pow((sin(xz * w.frequency + time * w.phase) + 1.0f) / 2.0f, w.steepness);
+}
+
+glm::vec3 Water::getDisplacement(glm::vec3 position, float time) const
+{
+	if (waveFunction == SINE)
+	{
+		float displacement = 0.0f;
+		for (int i = 0; i < MAX_WAVES; i++)
+		{
+			displacement += sine(position, waves[i], time);
+		}
+		return glm::vec3(position.x, displacement, position.z);
+	}
+
+	else if (waveFunction == STEEP_SINE)
+	{
+		float displacement = 0.0f;
+		for (int i = 0; i < MAX_WAVES; i++)
+		{
+			displacement += steepSine(position, waves[i], time);
+		}
+		return glm::vec3(position.x, displacement, position.z);
+	}
 }
 
 void Water::setupWavesUbo()
