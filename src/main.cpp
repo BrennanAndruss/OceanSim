@@ -53,16 +53,21 @@ public:
 
 	// Meshes
 	Mesh cube;
+	Mesh surfboard;
 
 	// Materials
 	Material cubeMaterial;
+	Material surfboardMaterial;
 
 	// Shaders
 	Shader simpleShader;
+	Shader textureShader;
 	Shader waterShader;
 	Shader cubemapShader;
 
 	// Textures
+	Texture surfboardTexture;
+
 	unsigned int cubemapTexture;
 	char* faces[6] = {
 		"right",
@@ -76,6 +81,7 @@ public:
 	// Game objects
 	Water water;
 	GameObject cube1;
+	GameObject surfboard1;
 
 	// Animation data
 	float accumulatedTime = 0.0f;
@@ -207,8 +213,12 @@ public:
 
 		// Initialize shaders
 		simpleShader.init(resourceDir + "/simple.vert", resourceDir + "/simple.frag");
+		textureShader.init(resourceDir + "/texture.vert", resourceDir + "/texture.frag");
 		waterShader.init(resourceDir + "/water.vert", resourceDir + "/water.frag");
 		cubemapShader.init(resourceDir + "/cubemap.vert", resourceDir + "/cubemap.frag");
+
+		// Initialize textures
+		surfboardTexture.init(resourceDir + "/surfboard.png", true);
 
 		// Initialize the skybox
 		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
@@ -224,23 +234,33 @@ public:
 		water.generateWaves(1);
 
 		// Load the cube mesh
-		loadObj(cube);
+		loadObj(cube, resourceDir + "/cube.obj");
 
 		// Initialize the cube material and game object
 		cubeMaterial = Material(&simpleShader, nullptr, glm::vec3(0.1f, 0.1f, 0.2f),
 			glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
 
-		cube1 = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), 
-			glm::vec3(5.0f)), &cube, &cubeMaterial);
+		cube1 = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f), 
+			glm::vec3(0.0f), glm::vec3(5.0f)), &cube, &cubeMaterial);
+
+		// Load the surfboard mesh
+		loadObj(surfboard, resourceDir + "/surfboard.obj");
+
+		// Initialize the surfboard material and game object
+		surfboardMaterial = Material(&textureShader, &surfboardTexture, 
+			glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), 
+			glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
+
+		surfboard1 = GameObject(Transform(glm::vec3(0.0f, 1.0f, 0.0f), 
+			glm::vec3(0.0f), glm::vec3(2.0f)), &surfboard, &surfboardMaterial);
 	}
 
-	void loadObj(Mesh& mesh)
+	void loadObj(Mesh& mesh, std::string dir)
 	{
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> objMaterials;
 		std::string errStr;
-		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr,
-			(resourceDir + "/cube.obj").c_str());
+		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr, dir.c_str());
 
 		if (!rc)
 		{
@@ -252,13 +272,12 @@ public:
 		}
 	}
 
-	void loadMultishapeObj(std::vector<Mesh>& model)
+	void loadMultishapeObj(std::vector<Mesh>& model, std::string dir)
 	{
 		std::vector<tinyobj::shape_t> shapes;
 		std::vector<tinyobj::material_t> objMaterials;
 		std::string errStr;
-		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr,
-			(resourceDir + "/cube.obj").c_str());
+		bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr, dir.c_str());
 
 		if (!rc)
 		{
@@ -325,7 +344,8 @@ public:
 		camera.updatePosition(moveDirection, time->getDeltaTime());
 
 		// Draw game objects
-		cube1.draw(lightDir, camera.getPosition());
+		// cube1.draw(lightDir, camera.getPosition());
+		surfboard1.draw(lightDir, camera.getPosition());
 
 		// Configure water shader and draw the water
 		glm::mat4 model(1.0f);

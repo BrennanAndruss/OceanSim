@@ -38,20 +38,17 @@ struct Material
 	~Material();
 };
 
-class GameObject
+struct GameObject
 {
-public:
+	Transform transform;
+	Mesh* mesh;
+	Material* material;
+
 	GameObject();
 	GameObject(Transform transform, Mesh* mesh, Material* material);
 	~GameObject();
 
 	void draw(glm::vec3 lightDir, glm::vec3 cameraPos);
-
-private:
-	Transform transform;
-	Mesh* mesh;
-	Material* material;
-
 };
 
 #endif // _GAMEOBJECT_H_
