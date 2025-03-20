@@ -18,11 +18,15 @@ Transform::~Transform() {}
 glm::mat4 Transform::getCompositeTransform() const
 {
 	glm::mat4 model(1.0f);
-	model = glm::scale(model, scale);
+
+	model = glm::translate(model, translation);
+	
 	model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::translate(model, translation);
+	
+	model = glm::scale(model, scale);
+
 	return model;
 }
 
@@ -53,11 +57,18 @@ GameObject::GameObject(Transform transform, Mesh* mesh, Material* material)
 
 GameObject::~GameObject() {}
 
-void GameObject::draw(glm::vec3 lightDir, glm::vec3 cameraPos)
+void GameObject::draw(glm::vec3 lightDir, glm::vec3 cameraPos, glm::mat4* modelMat)
 {
 	// Set generic shader uniforms
 	material->shader->bind();
-	material->shader->setMat4("model", transform.getCompositeTransform());
+	if (modelMat)
+	{
+		material->shader->setMat4("model", *modelMat);
+	}
+	else
+	{
+		material->shader->setMat4("model", transform.getCompositeTransform());
+	}
 	material->shader->setVec3("lightDir", lightDir);
 	material->shader->setVec3("cameraPos", cameraPos);
 

@@ -48,7 +48,7 @@ struct GameObject
 	GameObject(Transform transform, Mesh* mesh, Material* material);
 	~GameObject();
 
-	void draw(glm::vec3 lightDir, glm::vec3 cameraPos);
+	void draw(glm::vec3 lightDir, glm::vec3 cameraPos, glm::mat4* modelMat = nullptr);
 };
 
 #endif // _GAMEOBJECT_H_

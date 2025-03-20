@@ -15,6 +15,7 @@
 #include "Mesh.h"
 #include "GameObject.h"
 #include "Water.h"
+#include "HierarchyNode.h"
 #include "WindowManager.h"
 #include "Time.h"
 
@@ -54,10 +55,12 @@ public:
 	// Meshes
 	Mesh cube;
 	Mesh surfboard;
+	std::vector<Mesh> dummyMeshes;
 
 	// Materials
 	Material cubeMaterial;
 	Material surfboardMaterial;
+	Material dummyMaterial;
 
 	// Shaders
 	Shader simpleShader;
@@ -82,6 +85,9 @@ public:
 	Water water;
 	GameObject cube1;
 	GameObject surfboard1;
+	GameObject dummyRootObject;
+	std::vector<GameObject> dummyObjects;
+	HierarchyNode dummyRoot;
 
 	// Animation data
 	float accumulatedTime = 0.0f;
@@ -254,6 +260,42 @@ public:
 
 		surfboard1 = GameObject(Transform(glm::vec3(0.0f, 1.0f, 0.0f), 
 			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
+
+		// Load the dummy meshes
+		loadMultishapeObj(dummyMeshes, resourceDir + "/dummy.obj");
+
+		dummyMaterial = Material(&simpleShader, nullptr, glm::vec3(0.3f, 0.2f, 0.1f),
+			glm::vec3(0.7f, 0.6f, 0.5f), glm::vec3(0.2f, 0.15f, 0.1f), 16.0f);
+
+		// Create the dummy game objects
+		for (size_t i = 0; i < dummyMeshes.size(); i++)
+		{
+			dummyObjects.push_back(GameObject(Transform(glm::vec3(0.0f),
+				glm::vec3(0.0f), glm::vec3(1.0f)),
+				&dummyMeshes[i], &dummyMaterial));
+		}
+
+		// Create a hierarchy for the dummy, starting with the waist
+		dummyRootObject = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(-90.0f, 0.0f, 0.0f), glm::vec3(0.02f, 0.02f, 0.02f)),
+			nullptr, nullptr);
+
+		dummyRoot = HierarchyNode(&dummyRootObject);
+
+		HierarchyNode* waist = new HierarchyNode(&dummyObjects[12]);
+		HierarchyNode* belly = new HierarchyNode(&dummyObjects[13]);
+		HierarchyNode* torso = new HierarchyNode(&dummyObjects[14]);
+
+		dummyRoot.addChild(waist);
+		waist->addChild(belly);
+		belly->addChild(torso);
+
+		createLimbHierarchy(dummyObjects, &dummyRoot, 11, 5);		// left leg
+		createLimbHierarchy(dummyObjects, &dummyRoot, 5, -1);		// right leg
+
+		createLimbHierarchy(dummyObjects, torso, 21, 27);		// left arm
+		createLimbHierarchy(dummyObjects, torso, 15, 21);		// right arm
+		createLimbHierarchy(dummyObjects, torso, 27, 29);		// head
 	}
 
 	void loadObj(Mesh& mesh, std::string dir)
@@ -292,6 +334,21 @@ public:
 				model[i].setupBuffers(shapes[i]);
 			}
 		}
+	}
+
+	void createLimbHierarchy(std::vector<GameObject>& objects, HierarchyNode* root, int start, int end)
+	{
+		if (start == end) return;
+
+		// Create a new shape node for the current shape
+		HierarchyNode* node = new HierarchyNode(&objects[start]);
+
+		// Add the shape node to the root
+		root->addChild(node);
+
+		// Recursively create the hierarchy for the next shape
+		start < end ? start++ : start--;
+		createLimbHierarchy(objects, node, start, end);
 	}
 
 	unsigned int createSky(std::string dir, std::string extension)
@@ -345,12 +402,18 @@ public:
 		camera.updatePosition(moveDirection, time->getDeltaTime());
 
 		// Update game objects
-		surfboard1.transform.translation = water.getDisplacement(
+		glm::vec3 displacement = water.getDisplacement(
 			surfboard1.transform.translation, accumulatedTime);
+		surfboard1.transform.translation = displacement;
+		dummyRoot.gameObject->transform.translation = displacement;
 
 		// Draw game objects
-		// cube1.draw(lightDir, camera.getPosition());
 		surfboard1.draw(lightDir, camera.getPosition());
+		dummyRoot.drawHierarchyFromRoot(lightDir, camera.getPosition());
+		//for (GameObject& dummy : dummyObjects)
+		//{
+		//	dummy.draw(lightDir, camera.getPosition());
+		//}
 
 		// Configure water shader and draw the water
 		glm::mat4 model(1.0f);
@@ -429,6 +492,9 @@ int main(int argc, char *argv[])
 		// Poll for and process events
 		glfwPollEvents();
 	}
+
+	// Clear resources
+	application.dummyRoot.clearHierarchy();
 
 	// Quit program
 	windowManager->shutdown();

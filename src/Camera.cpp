@@ -3,7 +3,7 @@
 #include <iostream>
 
 Camera::Camera() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
-	velocity(glm::vec3(0.0f, 0.0f, 0.0f)), accelRate(0.25f), pitch(0.0f),
+	velocity(glm::vec3(0.0f, 0.0f, 0.0f)), accelRate(0.75f), pitch(0.0f),
 	yaw(-90.0f), sensitivity(0.05f), matricesUboID(0)
 {
 	updateCameraVectors();
@@ -11,7 +11,7 @@ Camera::Camera() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
 
 Camera::Camera(glm::vec3 position, int* screenWidth, int* screenHeight) 
 	: position(position), screenWidth(screenWidth), screenHeight(screenHeight),
-	velocity(glm::vec3(0.0f, 0.0f, 0.0f)), accelRate(0.25f), pitch(0.0f), 
+	velocity(glm::vec3(0.0f, 0.0f, 0.0f)), accelRate(0.75f), pitch(0.0f), 
 	yaw(-90.0f), sensitivity(0.05f), matricesUboID(0)
 {
 	updateCameraVectors();
@@ -96,7 +96,7 @@ void Camera::setupMatricesUbo()
 
 	// Store the projection matrix
 	float aspect = (float)(*screenWidth) / (*screenHeight);
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 1000.0f);
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUboID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -113,7 +113,7 @@ void Camera::updatePerspective()
 {
 	// Update the projection matrix
 	float aspect = (float)(*screenWidth) / (*screenHeight);
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 1000.0f);
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUboID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
