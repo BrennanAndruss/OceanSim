@@ -15,6 +15,8 @@ uniform float matShine;
 uniform vec3 lightDir;
 uniform vec3 cameraPos;
 
+uniform samplerCube cubemap;
+
 // Debug flags
 uniform bool debugNormals;
 
@@ -28,24 +30,33 @@ void main()
 
 	vec3 normal = normalize(fragNor);
 	vec3 light = normalize(-lightDir);
+	vec3 view = normalize(cameraPos - fragPos);
 
 	// Ambient lighting
 	vec3 ambient = matAmb;
 
 	// Diffuse reflection
-	float dC = max(dot(normal, light), 0.0);
-	vec3 diffuse = matDif * dC;
+	float diffuseFactor = max(dot(normal, light), 0.0);
+	vec3 diffuse = matDif * diffuseFactor;
+
+	// Fresnel term with Schlick Approximation
+	float baseReflectance = 0.08;
+	float viewDot = clamp(dot(view, normal), 0.0, 1.0);
+	float fresnelFactor = baseReflectance + (1 - baseReflectance) * 
+		pow(1.0 - max(dot(view, normal), 0.0), 5.0);
 	
-	// Specular reflection
-	vec3 view = normalize(cameraPos - fragPos);
-	vec3 halfway = normalize(light + view);
-	float sC = max(dot(normal, halfway), 0.0);
-	vec3 specular = matSpec * pow(sC, matShine);
+	// Specular reflection with fresnel
+	vec3 halfVec = normalize(light + view);
 
-	// Debug overrides
-//	ambient = vec3(0.0);
-//	specular = vec3(0.0);
+	float specularFactor = pow(max(dot(normal, halfVec), 0.0), matShine);
+	vec3 specular = matSpec * specularFactor * fresnelFactor;
 
-	vec3 reflection = ambient + diffuse + specular;
-	fragColor = vec4(reflection, 1.0);
+	// Cubemap reflection with fresnel
+	vec3 reflectionVec = reflect(-view, normal);
+
+	vec3 reflectionColor = texture(cubemap, reflectionVec).rgb;
+	vec3 reflection = reflectionColor * fresnelFactor;
+
+	vec3 outColor = ambient + diffuse + specular + reflection;
+	fragColor = vec4(outColor, 1.0);
 }

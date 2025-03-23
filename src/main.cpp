@@ -451,6 +451,9 @@ public:
 		waterShader.setFloat("time", accumulatedTime);
 		waterShader.setInt("waveFunction", water.waveFunction);
 
+		// Bind the cubemap for skybox reflections
+		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+
 		waterShader.setVec3("lightDir", lightDir);
 		waterShader.setVec3("cameraPos", camera.getPosition());
 		waterShader.setVec3("matAmb", glm::vec3(0.1f, 0.1f, 0.2f));
