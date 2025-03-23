@@ -21,8 +21,6 @@ Camera::~Camera() {}
 
 void Camera::updatePosition(glm::vec3 moveDirection, float deltaTime)
 {
-	// std::cout << "shit happen???\n";
-
 	if (moveDirection.x != 0.0f || moveDirection.y != 0.0f || moveDirection.z != 0.0f)
 	{
 		// Convert move direction to camera space

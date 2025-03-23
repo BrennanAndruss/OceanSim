@@ -85,6 +85,8 @@ public:
 	Water water;
 	GameObject cube1;
 	GameObject surfboard1;
+	GameObject surfboard2;
+	GameObject surfboard3;
 	GameObject dummyRootObject;
 	std::vector<GameObject> dummyObjects;
 	HierarchyNode dummyRoot;
@@ -235,7 +237,7 @@ public:
 	void initGameObjects()
 	{
 		// Initialize ocean
-		water = Water(500, 50);
+		water = Water(1000, 50);
 		water.waveFunction = WaveFunction::STEEP_SINE;
 		water.generateMesh();
 		water.generateWaves(1);
@@ -259,6 +261,12 @@ public:
 			glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
 
 		surfboard1 = GameObject(Transform(glm::vec3(0.0f, 1.0f, 0.0f), 
+			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
+
+		surfboard2 = GameObject(Transform(glm::vec3(6.0f, 1.0f, 3.0f),
+			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
+
+		surfboard3 = GameObject(Transform(glm::vec3(-6.0f, 1.0f, 3.0f),
 			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
 
 		// Load the dummy meshes
@@ -416,8 +424,18 @@ public:
 		surfboard1.transform.translation = displacement;
 		dummyRoot.gameObject->transform.translation.y = displacement.y;
 
+		displacement = water.getDisplacement(
+			surfboard2.transform.translation, accumulatedTime);
+		surfboard2.transform.translation = displacement;
+
+		displacement = water.getDisplacement(
+			surfboard3.transform.translation, accumulatedTime);
+		surfboard3.transform.translation = displacement;
+
 		// Draw game objects
 		surfboard1.draw(lightDir, camera.getPosition());
+		surfboard2.draw(lightDir, camera.getPosition());
+		surfboard3.draw(lightDir, camera.getPosition());
 		dummyRoot.drawHierarchyFromRoot(lightDir, camera.getPosition());
 		//for (GameObject& dummy : dummyObjects)
 		//{
