@@ -13,7 +13,7 @@ Wave::Wave(float amplitude, float wavelength, float speed,
 	float steepness, glm::vec2 direction)
 {
 	this->amplitude = amplitude;
-	this->frequency = glm::two_pi<float>() / wavelength;
+	this->frequency = sqrt(9.81f * glm::two_pi<float>() / wavelength);
 	this->phase = speed * frequency;
 	this->steepness = steepness;
 	direction = glm::normalize(direction);
@@ -40,8 +40,8 @@ Wave flatWave()
 
 Water::Water() : planeRes(10), planeLen(10), waveFunction(SINE), wavesUboID(0) {};
 
-Water::Water(int planeRes, int planeLen) 
-	: planeRes(planeRes), planeLen(planeLen), waveFunction(SINE), wavesUboID(0) {};
+Water::Water(int planeRes, int planeLen, WaveFunction wf) 
+	: planeRes(planeRes), planeLen(planeLen), waveFunction(wf), wavesUboID(0) {};
 
 Water::~Water() {};
 
@@ -88,30 +88,52 @@ void Water::generateMesh()
 	mesh.setupBuffers(positions, normals, texCoords, indices);
 }
 
-void Water::generateWaves(unsigned int seed)
+void Water::generateWaves(unsigned int seed, float medianWavelength, 
+	float medianAmplitude, float spreadAngle)
 {
 	std::mt19937 generator(seed);
 
+	float spread = glm::radians(spreadAngle);
+
 	// Define distributions for wave parameters
-	std::uniform_real_distribution<float> amplitudeDist(0.01f, 0.05f);
-	std::uniform_real_distribution<float> wavelengthDist(2.0f, 8.0f);
+	std::uniform_real_distribution<float> wavelengthDist(
+		medianWavelength / 2.0f, medianWavelength * 2.0f);
 	std::uniform_real_distribution<float> speedDist(0.5f, 2.0f);
-	std::uniform_real_distribution<float> steepnessDist(1.0f, 4.0f);
-	std::uniform_real_distribution<float> angleDist(
-		-glm::quarter_pi<float>(), glm::quarter_pi<float>());
+	std::uniform_real_distribution<float> angleDist(-spread, spread);
+
+	std::uniform_real_distribution<float> steepnessDist;
+	if (waveFunction == GERSTNER)
+	{
+		steepnessDist = std::uniform_real_distribution<float>(0.25f, 1.0f);
+	}
+	else
+	{
+		steepnessDist = std::uniform_real_distribution<float>(1.0f, 6.0f);
+	}
 
 	float baseAngle = 0.0f;
 
 	for (int i = 0; i < MAX_WAVES; i++)
 	{
 		// Generate random wave parameters
-		float amplitude = amplitudeDist(generator);
 		float wavelength = wavelengthDist(generator);
 		float speed = speedDist(generator);
 		float steepness = steepnessDist(generator);
 		
 		float angle = baseAngle + angleDist(generator);
 		glm::vec2 direction = glm::vec2(sin(angle), -cos(angle));
+
+		// Set amplitude to ratio of median amplitude to median wavelength
+		float amplitude = wavelength * (medianAmplitude / medianWavelength);
+
+		// Constrain steepness of Gerstner waves
+		// (NOTE: Loops are not completely prevented with this method)
+		if (waveFunction == WaveFunction::GERSTNER)
+		{
+			float k = glm::two_pi<float>() / wavelength;
+			float maxSteepness = 1.0f / k * MAX_WAVES * amplitude;
+			steepness = glm::min(steepness, maxSteepness);
+		}
 
 		waves[i] = Wave(amplitude, wavelength, speed, steepness, direction);
 	}
@@ -184,6 +206,11 @@ glm::vec3 Water::getDisplacement(glm::vec3 position, float time) const
 	{
 		return position;
 	}
+}
+
+WaveFunction Water::getWaveFunction() const
+{
+	return waveFunction;
 }
 
 void Water::setupWavesUbo()

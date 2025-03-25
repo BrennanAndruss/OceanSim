@@ -39,19 +39,19 @@ struct alignas(16) Wave
 class Water
 {
 public:
-	WaveFunction waveFunction;
-
 	Water();
-	Water(int planeRes, int planeLen);
+	Water(int planeRes, int planeLen, WaveFunction waveFunction);
 	~Water();
 
 	void generateMesh();
-	void generateWaves(unsigned int seed);
+	void generateWaves(unsigned int seed, float medianWavelength, 
+		float medianAmplitude, float spreadAngle);
 
 	float sine(glm::vec3 position, Wave w, float time) const;
 	float steepSine(glm::vec3 position, Wave w, float time) const;
 	glm::vec3 gerstner(glm::vec3 position, Wave w, float tiem) const;
 	glm::vec3 getDisplacement(glm::vec3 position, float time) const;
+	WaveFunction getWaveFunction() const;
 
 	void setupWavesUbo();
 	void updateWavesUbo();
@@ -59,6 +59,7 @@ public:
 
 private:
 	int planeRes, planeLen;
+	WaveFunction waveFunction;
 
 	Mesh mesh;
 	std::vector<glm::vec3> positions;

@@ -237,10 +237,9 @@ public:
 	void initGameObjects()
 	{
 		// Initialize ocean
-		water = Water(1000, 50);
-		water.waveFunction = WaveFunction::GERSTNER;
+		water = Water(1000, 50, WaveFunction::GERSTNER);
 		water.generateMesh();
-		water.generateWaves(1);
+		water.generateWaves(2, 300.0f, 0.15f, 35.0f);
 
 		// Load the cube mesh
 		loadObj(cube, resourceDir + "/cube.obj");
@@ -449,7 +448,7 @@ public:
 		waterShader.bind();
 		waterShader.setMat4("model", model);
 		waterShader.setFloat("time", accumulatedTime);
-		waterShader.setInt("waveFunction", water.waveFunction);
+		waterShader.setInt("waveFunction", water.getWaveFunction());
 
 		// Bind the cubemap for skybox reflections
 		glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
