@@ -14,6 +14,7 @@ enum WaveFunction
 {
 	SINE,
 	STEEP_SINE,
+	GERSTNER,
 };
 
 // Aligned for std140 alignment
@@ -49,6 +50,7 @@ public:
 
 	float sine(glm::vec3 position, Wave w, float time) const;
 	float steepSine(glm::vec3 position, Wave w, float time) const;
+	glm::vec3 gerstner(glm::vec3 position, Wave w, float tiem) const;
 	glm::vec3 getDisplacement(glm::vec3 position, float time) const;
 
 	void setupWavesUbo();

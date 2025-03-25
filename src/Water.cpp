@@ -133,6 +133,22 @@ float Water::steepSine(glm::vec3 position, Wave w, float time) const
 		pow((sin(xz * w.frequency + time * w.phase) + 1.0f) / 2.0f, w.steepness);
 }
 
+glm::vec3 Water::gerstner(glm::vec3 position, Wave w, float time) const
+{
+	float xz = glm::dot(glm::vec2(position.x, position.z), w.getDirection());
+	float f = xz * w.frequency + time * w.phase;
+
+	float s = sin(f);
+	float c = cos(f);
+
+	glm::vec3 g(0.0);
+	g.x = w.steepness * w.amplitude * w.getDirection().x * c;
+	g.y = w.amplitude * s;
+	g.z = w.steepness * w.amplitude * w.getDirection().y * c;
+
+	return g;
+}
+
 glm::vec3 Water::getDisplacement(glm::vec3 position, float time) const
 {
 	if (waveFunction == SINE)
@@ -153,6 +169,20 @@ glm::vec3 Water::getDisplacement(glm::vec3 position, float time) const
 			displacement += steepSine(position, waves[i], time);
 		}
 		return glm::vec3(position.x, displacement, position.z);
+	}
+
+	else if (waveFunction == GERSTNER)
+	{
+		glm::vec3 displacement(0.0f);
+		for (int i = 0; i < MAX_WAVES; i++)
+		{
+			displacement += gerstner(position, waves[i], time);
+		}
+		return glm::vec3(position.x, displacement.y, position.z);
+	}
+	else
+	{
+		return position;
 	}
 }
 

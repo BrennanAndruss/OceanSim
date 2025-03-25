@@ -238,7 +238,7 @@ public:
 	{
 		// Initialize ocean
 		water = Water(1000, 50);
-		water.waveFunction = WaveFunction::STEEP_SINE;
+		water.waveFunction = WaveFunction::GERSTNER;
 		water.generateMesh();
 		water.generateWaves(1);
 
