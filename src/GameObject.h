@@ -26,7 +26,8 @@ struct Transform
 struct Material
 {
 	Shader* shader;
-	Texture* texture;
+	Texture* difTexture;
+	Texture* specTexture;
 
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
@@ -34,7 +35,9 @@ struct Material
 	float shininess;
 
 	Material();
-	Material(Shader* shader, Texture* texture, glm::vec3 ambient, glm::vec3 diffuse, 
+	Material(Shader* shader, glm::vec3 ambient, Texture* difTexture,
+		Texture* specTexture, float shininess);
+	Material(Shader* shader, glm::vec3 ambient, glm::vec3 diffuse, 
 		glm::vec3 specular, float shininess);
 	~Material();
 };

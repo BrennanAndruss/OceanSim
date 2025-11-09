@@ -69,7 +69,8 @@ public:
 	Shader cubemapShader;
 
 	// Textures
-	Texture surfboardTexture;
+	Texture surfboardDifTexture;
+	Texture surfboardSpecTexture;
 
 	unsigned int cubemapTexture;
 	char* faces[6] = {
@@ -226,7 +227,8 @@ public:
 		cubemapShader.init(resourceDir + "/cubemap.vert", resourceDir + "/cubemap.frag");
 
 		// Initialize textures
-		surfboardTexture.init(resourceDir + "/surfboard.png", true);
+		surfboardDifTexture.init(resourceDir + "/surfboard_dif.png", true);
+		surfboardSpecTexture.init(resourceDir + "/surfboard_spec.png", true);
 
 		// Initialize the skybox
 		cubemapTexture = createSky(resourceDir + "/skycube1/", ".bmp");
@@ -237,27 +239,29 @@ public:
 	void initGameObjects()
 	{
 		// Initialize ocean
-		water = Water(1000, 50, WaveFunction::GERSTNER);
+		water = Water(1000, 100, WaveFunction::GERSTNER);
 		water.generateMesh();
-		water.generateWaves(2, 300.0f, 0.15f, 35.0f);
+		water.generateWaves(2, 20.0f, 0.025f, 35.0f);
 
 		// Load the cube mesh
 		loadObj(cube, resourceDir + "/cube.obj");
 
 		// Initialize the cube material and game object
-		cubeMaterial = Material(&simpleShader, nullptr, glm::vec3(0.1f, 0.1f, 0.2f),
+		cubeMaterial = Material(&simpleShader, glm::vec3(0.1f, 0.1f, 0.2f),
 			glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
 
-		cube1 = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f), 
-			glm::vec3(0.0f), glm::vec3(5.0f)), &cube, &cubeMaterial);
+		//cube1 = GameObject(Transform(glm::vec3(0.0f, 0.0f, 0.0f), 
+		//	glm::vec3(0.0f), glm::vec3(10.0f)), &cube, &cubeMaterial);
 
 		// Load the surfboard mesh
 		loadObj(surfboard, resourceDir + "/surfboard.obj");
 
 		// Initialize the surfboard material and game object
-		surfboardMaterial = Material(&textureShader, &surfboardTexture, 
-			glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), 
-			glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
+		//surfboardMaterial = Material(&textureShader, &surfboardTexture, 
+		//	glm::vec3(0.1f, 0.1f, 0.2f), glm::vec3(1.0f, 1.0f, 1.0f), 
+		//	glm::vec3(0.8f, 0.9f, 1.0f), 32.0f);
+		surfboardMaterial = Material(&textureShader, glm::vec3(0.1f, 0.1f, 0.15f),
+			&surfboardDifTexture, &surfboardSpecTexture, 32.0f);
 
 		surfboard1 = GameObject(Transform(glm::vec3(0.0f, 1.0f, 0.0f), 
 			glm::vec3(0.0f, 90.0f, 0.0f), glm::vec3(1.0f)), &surfboard, &surfboardMaterial);
@@ -271,7 +275,7 @@ public:
 		// Load the dummy meshes
 		loadMultishapeObj(dummyMeshes, resourceDir + "/dummy.obj");
 
-		dummyMaterial = Material(&simpleShader, nullptr, glm::vec3(0.3f, 0.2f, 0.1f),
+		dummyMaterial = Material(&simpleShader, glm::vec3(0.1f, 0.1f, 0.15f),
 			glm::vec3(0.9f, 0.8f, 0.6f), glm::vec3(0.2f, 0.15f, 0.1f), 16.0f);
 
 		// Create the dummy game objects
@@ -466,7 +470,7 @@ public:
 
 		// Configure cubemap shader
 		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(50.0f));
+		model = glm::scale(model, glm::vec3(100.0f));
 
 		cubemapShader.bind();
 		cubemapShader.setMat4("model", model);

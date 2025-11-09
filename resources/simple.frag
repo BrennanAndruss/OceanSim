@@ -34,8 +34,8 @@ void main()
 	vec3 specular = matSpec * pow(sC, matShine);
 
 	// Debug overrides
-	ambient = vec3(0.0);
-	specular = vec3(0.0);
+//	ambient = vec3(0.0);
+//	specular = vec3(0.0);
 
 	vec3 reflection = ambient + diffuse + specular;
 	fragColor = vec4(reflection, 1.0);

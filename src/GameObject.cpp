@@ -53,12 +53,19 @@ glm::mat4 Transform::getCompositeTransform(glm::vec3 center) const
 
 #pragma region Material
 
-Material::Material() : shader(nullptr), texture(nullptr), ambient(glm::vec3(0.0f)), 
-	diffuse(glm::vec3(0.0f)), specular(glm::vec3(0.0f)), shininess(0.0f) {}
+Material::Material() : shader(nullptr), difTexture(nullptr), specTexture(nullptr), 
+	ambient(glm::vec3(0.0f)), diffuse(glm::vec3(0.0f)), specular(glm::vec3(0.0f)), 
+	shininess(0.0f) {}
 
-Material::Material(Shader* shader, Texture* texture, glm::vec3 ambient, glm::vec3 diffuse,
-	glm::vec3 specular, float shininess) : shader(shader), texture(texture),
-	ambient(ambient), diffuse(diffuse), specular(specular), shininess(shininess) {}
+Material::Material(Shader* shader, glm::vec3 ambient, glm::vec3 diffuse,
+	glm::vec3 specular, float shininess) : shader(shader), difTexture(nullptr),
+	specTexture(nullptr), ambient(ambient), diffuse(diffuse), specular(specular), 
+	shininess(shininess) {}
+
+Material::Material(Shader* shader, glm::vec3 ambient, Texture* difTexture,
+	Texture* specTexture, float shininess) : shader(shader), difTexture(difTexture),
+	specTexture(specTexture), ambient(ambient), diffuse(glm::vec3(0.0f)), 
+	specular(glm::vec3(0.0f)), shininess(shininess) {}
 
 Material::~Material() {}
 
@@ -92,26 +99,32 @@ void GameObject::draw(glm::vec3 lightDir, glm::vec3 cameraPos, glm::mat4* modelM
 
 	// Set material properties
 	material->shader->setVec3("matAmb", material->ambient);
-	material->shader->setVec3("matDif", material->diffuse);
-	material->shader->setVec3("matSpec", material->specular);
-	material->shader->setFloat("matShine", material->shininess);
-
-	// Set texture
-	if (material->texture)
+	if (material->difTexture)
 	{
-		// Get the handle for the texture uniform
-		GLint handle = glGetUniformLocation(material->shader->getPid(), "Texture0");
+		GLint handle = glGetUniformLocation(material->shader->getPid(), "matDif");
+		material->difTexture->bind(handle);
+	}
+	else
+	{
+		material->shader->setVec3("matDif", material->diffuse);
+	}
 
-		// Bind the texture
-		material->texture->bind(handle);
+	if (material->specTexture)
+	{
+		GLint handle = glGetUniformLocation(material->shader->getPid(), "matSpec");
+		material->difTexture->bind(handle);
+	}
+	else
+	{
+		material->shader->setVec3("matSpec", material->specular);
 	}
 	
 	mesh->draw();
 
 	// Unbind resources
 	material->shader->unbind();
-	if (material->texture)
-		material->texture->unbind();
+	if (material->difTexture)
+		material->difTexture->unbind();
 }
 
 #pragma endregion
